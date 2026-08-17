@@ -22,7 +22,7 @@ accesslog = "-"
 errorlog = "-"
 loglevel = os.getenv("GUNICORN_LOG_LEVEL", "info")
 
-# Preload the app before forking so workers share read-only memory pages
-# (copy-on-write). Safe here because Flask-SQLAlchemy creates its engine
-# lazily on first request per worker.
-preload_app = True
+# Do NOT preload the app — Railway seems to send SIGKILL if the master
+# process exceeds memory during app import. Each worker (we only have 1)
+# lazy-loads its own app, spreading the cost over time.
+preload_app = False
