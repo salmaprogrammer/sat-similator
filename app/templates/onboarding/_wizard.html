@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Get started — Step {{ n }} of {{ total }}{% endblock %}
+{% block content %}
+<section class="wizard">
+  <div class="wizard-progress">
+    <div class="wizard-progress-bar" style="--pct: {{ (n / total * 100) | round }}%"></div>
+    <small class="muted">Step {{ n }} of {{ total }}</small>
+  </div>
+  <div class="wizard-card">
+    {% block wizard %}{% endblock %}
+  </div>
+  <div class="wizard-nav">
+    {% if n > 1 %}
+      <a class="btn btn-ghost" href="{{ url_for('onboarding.step', n=n-1) }}">Back</a>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

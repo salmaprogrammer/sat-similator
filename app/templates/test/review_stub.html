@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Check your work — Module {{ module_num }}{% endblock %}
+{% block content %}
+<section class="wizard">
+  <h1>Check your work</h1>
+  <p class="muted">On test day, you won't be able to move on to the next module until time expires. For these practice questions, you can click Next when you're ready to move on.</p>
+  <p class="muted small">Phase 6 will render the full navigator grid here and make Next actually submit the module.</p>
+  <a href="{{ url_for('student.dashboard') }}" class="btn btn-primary">Back to dashboard</a>
+</section>
+{% endblock %}

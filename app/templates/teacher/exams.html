@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Exams — Teacher{% endblock %}
+{% block content %}
+{% include "teacher/_nav.html" %}
+
+<div class="page-head">
+  <h1>Exams</h1>
+  <a class="btn btn-primary" href="{{ url_for('teacher.exam_new') }}">New exam</a>
+</div>
+
+{% if exams %}
+  <table class="table">
+    <thead>
+      <tr><th>Name</th><th>Modules</th><th>Status</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for e in exams %}
+        <tr>
+          <td><a href="{{ url_for('teacher.exam_detail', exam_id=e.id) }}">{{ e.name }}</a></td>
+          <td>{{ e.modules | length }}</td>
+          <td>{{ 'Published' if e.is_published else 'Draft' }}</td>
+          <td class="right">
+            <a href="{{ url_for('teacher.exam_edit', exam_id=e.id) }}">Edit</a>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <p class="muted">No exams yet. Create one to build a full-length practice test.</p>
+{% endif %}
+{% endblock %}

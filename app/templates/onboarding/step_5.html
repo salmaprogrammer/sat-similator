@@ -1,0 +1,13 @@
+{% extends "onboarding/_wizard.html" %}
+{% block wizard %}
+  <h1>What score are you aiming for?</h1>
+  <p class="muted">This becomes your goal on your dashboard.</p>
+  <form method="post">
+    {{ form.hidden_tag() }}
+    <div class="field">
+      {{ form.goal_score(class="input", placeholder="e.g. 1400", inputmode="numeric") }}
+      {% for err in form.goal_score.errors %}<small class="err">{{ err }}</small>{% endfor %}
+    </div>
+    {{ form.submit(class="btn btn-primary btn-lg") }}
+  </form>
+{% endblock %}

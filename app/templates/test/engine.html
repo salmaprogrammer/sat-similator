@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="csrf-token" content="{{ csrf_token() }}" />
+  <title>{{ module.section.value | upper }} Module {{ module_num }} · Question {{ q_idx }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/test_engine.css') }}" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+          onload="renderMathInElement(document.body)"></script>
+  <script defer src="https://unpkg.com/htmx.org@1.9.12"></script>
+  <script defer src="https://unpkg.com/alpinejs@3.14.1/dist/cdn.min.js"></script>
+</head>
+{% set engine_cfg = {
+  "attemptId": attempt.id,
+  "moduleNum": module_num,
+  "questionId": question.id,
+  "qIdx": q_idx,
+  "totalQuestions": total_questions,
+  "secondsRemaining": seconds_remaining,
+  "nextUrl": next_url,
+  "prevUrl": prev_url,
+  "isGridIn": question.type.value == 'grid_in',
+  "savedChoiceId": response.choice_id,
+  "savedFreeText": response.free_response_text or "",
+  "savedStrike": response.strikethrough_state or {},
+  "marked": response.marked_for_review,
+} %}
+<body class="test-body" x-data='testEngine({{ engine_cfg | tojson }})'>
+
+<header class="test-header">
+  <div class="left">
+    <button class="link" @click="showDirections = !showDirections">Directions ▾</button>
+  </div>
+  <div class="center">
+    <span class="timer" :class="{ 'timer-warn': secondsRemaining <= 60 }" x-show="!timerHidden">
+      <span x-text="fmt(secondsRemaining)"></span>
+    </span>
+    <button class="link small" @click="timerHidden = !timerHidden"
+            x-text="timerHidden ? 'Show' : 'Hide'"></button>
+  </div>
+  <div class="right">
+    <button class="tool" @click="toggleHighlight">Highlight</button>
+    {% if module.calculator_allowed %}
+    <button class="tool" @click="toggleCalculator">Calculator</button>
+    {% endif %}
+    {% if module.section.value == 'math' %}
+    <button class="tool" @click="showReference = !showReference">Reference</button>
+    {% endif %}
+    <button class="tool tool-more" @click="showMore = !showMore">⋯</button>
+
+    <div class="more-menu" x-show="showMore" @click.outside="showMore = false" x-cloak>
+      <a href="#" @click.prevent="saveAndExit">Save and Exit</a>
+      <a href="#" @click.prevent="toggleFullscreen">Fullscreen</a>
+      <a href="#" @click.prevent="showShortcuts = true; showMore = false">Keyboard shortcuts</a>
+      <a href="#" @click.prevent="toggleTheme">Switch to dark mode</a>
+      <a href="#" @click.prevent="showBugReport = true; showMore = false">Bug report</a>
+    </div>
+  </div>
+</header>
+
+<main class="test-main">
+  <div class="passage-pane">
+    <div class="pane-inner">
+      {% if module.section.value == 'rw' %}
+        <p class="muted small">Passage / stimulus goes here (RW section).</p>
+      {% else %}
+        <p class="muted small">Reference material / figures go here (Math section).</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="question-pane">
+    <div class="pane-inner">
+      <div class="question-header">
+        <div class="q-index">
+          <span class="q-num">{{ q_idx }}</span>
+          <button class="mark-btn" :class="{ 'is-marked': marked }" @click="toggleMark">
+            <span x-show="!marked">☐ Mark for Review</span>
+            <span x-show="marked">🚩 Marked</span>
+          </button>
+          <button class="link small" @click="showReport = true">⚑ Report</button>
+        </div>
+        <button class="strike-toggle" :class="{ 'is-on': strikeEnabled }" @click="toggleStrikeMode">
+          <span x-show="!strikeEnabled">A͟B͟C͟D͟ Eliminate</span>
+          <span x-show="strikeEnabled">A͟B͟C͟D͟ Eliminating…</span>
+        </button>
+      </div>
+
+      <div class="question-stem">{{ question.stem }}</div>
+
+      {% if question.type.value == 'mcq' %}
+        <ol class="choices choices-interactive">
+          {% for c in question.choices %}
+            <li class="choice"
+                :class="{ 'is-selected': chosenId == {{ c.id }}, 'is-struck': isStruck('{{ c.label }}') }">
+              <label>
+                <input type="radio" name="choice" value="{{ c.id }}"
+                       :checked="chosenId == {{ c.id }}"
+                       @change="pickChoice({{ c.id }}, '{{ c.label }}')" />
+                <span class="choice-label">{{ c.label }}</span>
+                <span class="choice-text">{{ c.text }}</span>
+              </label>
+              <button class="strike-target" x-show="strikeEnabled"
+                      @click="toggleStrike('{{ c.label }}')"
+                      x-text="isStruck('{{ c.label }}') ? 'Undo' : '✕'"></button>
+            </li>
+          {% endfor %}
+        </ol>
+      {% else %}
+        <div class="grid-in">
+          <input type="text" class="grid-in-input" placeholder="Answer…"
+                 x-model="freeText" @input.debounce.400ms="saveFreeText" />
+        </div>
+      {% endif %}
+
+      <p class="shortcuts-hint muted small">
+        Press <kbd>1</kbd>–<kbd>4</kbd> to pick a choice · <kbd>Enter</kbd> to advance
+      </p>
+    </div>
+  </div>
+</main>
+
+<footer class="test-footer">
+  <div class="left">
+    <span class="muted">{{ current_user.email.split('@')[0] }}</span>
+  </div>
+  <div class="center">
+    <button class="pill-btn" @click="showNavigator = true">
+      Question {{ q_idx }} of {{ total_questions }}
+    </button>
+  </div>
+  <div class="right">
+    <button class="btn btn-ghost" @click="goPrev" :disabled="!prevUrl">Previous</button>
+    <button class="btn btn-primary" @click="goNext">Next</button>
+  </div>
+</footer>
+
+{# Directions overlay #}
+<div class="overlay" x-show="showDirections" @click.self="showDirections = false" x-cloak>
+  <div class="modal">
+    <h3>Directions</h3>
+    <p>Read each question carefully and choose the best answer.</p>
+    <button class="btn btn-primary" @click="showDirections = false">Close</button>
+  </div>
+</div>
+
+{# Report modal #}
+<div class="overlay" x-show="showReport" @click.self="showReport = false" x-cloak>
+  <div class="modal">
+    <h3>Report this question</h3>
+    <textarea x-model="reportReason" placeholder="What's wrong with this question?" class="input" rows="4"></textarea>
+    <div class="button-row">
+      <button class="btn btn-primary" @click="submitReport">Submit</button>
+      <button class="btn btn-ghost" @click="showReport = false">Cancel</button>
+    </div>
+  </div>
+</div>
+
+{# Bug report modal #}
+<div class="overlay" x-show="showBugReport" @click.self="showBugReport = false" x-cloak>
+  <div class="modal">
+    <h3>Bug report</h3>
+    <p class="muted small">Route your feedback to support; not silently discarded.</p>
+    <textarea class="input" rows="4" placeholder="What went wrong?"></textarea>
+    <div class="button-row">
+      <button class="btn btn-primary" @click="showBugReport = false">Send</button>
+      <button class="btn btn-ghost" @click="showBugReport = false">Cancel</button>
+    </div>
+  </div>
+</div>
+
+{# Keyboard shortcuts modal #}
+<div class="overlay" x-show="showShortcuts" @click.self="showShortcuts = false" x-cloak>
+  <div class="modal">
+    <h3>Keyboard shortcuts</h3>
+    <ul class="shortcut-list">
+      <li><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> <kbd>4</kbd> — select A/B/C/D</li>
+      <li><kbd>Enter</kbd> — next question</li>
+    </ul>
+    <button class="btn btn-primary" @click="showShortcuts = false">Close</button>
+  </div>
+</div>
+
+{# Reference (formula sheet) — math only #}
+{% if module.section.value == 'math' %}
+<div class="overlay" x-show="showReference" @click.self="showReference = false" x-cloak>
+  <div class="modal wide">
+    <h3>Reference</h3>
+    <div class="reference-sheet">
+      <p>Common formulas — area of circle A = πr², area of triangle A = ½bh, Pythagorean theorem a² + b² = c², and more…</p>
+    </div>
+    <button class="btn btn-primary" @click="showReference = false">Close</button>
+  </div>
+</div>
+{% endif %}
+
+{# Question navigator §2.6 — modal shown mid-module #}
+<div class="overlay" x-show="showNavigator" @click.self="showNavigator = false" x-cloak>
+  <div class="modal wide">
+    <h3>Section {{ module.section.value | upper }}, Module {{ module_num }}<br />
+      <small class="muted">{{ module.section.value | upper }} · {{ module.calculator_allowed and 'Calculator' or 'No calculator' }}</small>
+    </h3>
+    <div class="nav-legend">
+      <span class="legend-chip nav-unanswered"></span> Unanswered
+      <span class="legend-chip nav-marked"></span> For Review
+    </div>
+    <div class="nav-grid">
+      {% for item in nav_items %}
+        <a class="nav-cell {% if item.answered %}nav-answered{% else %}nav-unanswered{% endif %} {% if item.marked %}nav-marked{% endif %} {% if item.is_current %}nav-current{% endif %}"
+           href="{{ item.url }}">
+          {{ item.idx }}
+          {% if item.marked %}<span class="flag">🚩</span>{% endif %}
+        </a>
+      {% endfor %}
+    </div>
+    <div class="button-row">
+      <a href="{{ url_for('test_engine.review', attempt_id=attempt.id, module_num=module_num) }}" class="btn btn-primary">Go to review page</a>
+      <button class="btn btn-ghost" @click="showNavigator = false">Close</button>
+    </div>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/test_engine.js') }}"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const token = document.querySelector('meta[name="csrf-token"]').content;
+    document.body.addEventListener("htmx:configRequest", (e) => e.detail.headers["X-CSRFToken"] = token);
+  });
+</script>
+</body>
+</html>

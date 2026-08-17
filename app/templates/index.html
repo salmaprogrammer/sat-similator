@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}SatSimilator — Practice for the SAT{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <h1>Practice for the SAT the way you'll actually take it.</h1>
+  <p class="lede">A full-length, timed, digital SAT simulator with per-topic analytics and teacher-authored question banks.</p>
+  <div class="cta-row">
+    <a href="{{ url_for('auth.signup') }}" class="btn btn-primary btn-lg">Get started</a>
+    <a href="{{ url_for('auth.signup') }}" class="btn btn-ghost btn-lg">I'm a teacher</a>
+  </div>
+</section>
+
+<section class="feature-grid">
+  <article>
+    <h3>Realistic test engine</h3>
+    <p>Timer, calculator, formula sheet, highlight, and eliminate-choice tools — the tools students expect on test day.</p>
+  </article>
+  <article>
+    <h3>Adaptive scoring</h3>
+    <p>Module 2 difficulty selection and per-topic breakdowns show students where to focus next.</p>
+  </article>
+  <article>
+    <h3>Teacher ingestion</h3>
+    <p>Upload PDFs, Word docs, or Markdown; we parse questions, detect answers, and let you approve them before publishing.</p>
+  </article>
+</section>
+{% endblock %}

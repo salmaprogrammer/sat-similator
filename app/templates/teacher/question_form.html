@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit question' if question else 'New question' }} — Teacher{% endblock %}
+{% block content %}
+{% include "teacher/_nav.html" %}
+
+<h1>{{ 'Edit question' if question else 'New question in ' + bank.name }}</h1>
+
+<form method="post" x-data="{ type: '{{ form.type.data }}' }" class="form-narrow">
+  {{ form.hidden_tag() }}
+
+  <div class="field">
+    {{ form.type.label }}
+    {{ form.type(class="input", **{"x-model": "type"}) }}
+  </div>
+
+  <div class="field">
+    {{ form.stem.label }}
+    {{ form.stem(class="input", rows=4) }}
+  </div>
+
+  <div class="grid-2">
+    <div class="field">
+      {{ form.topic.label }}
+      {{ form.topic(class="input", placeholder="e.g. Algebra") }}
+    </div>
+    <div class="field">
+      {{ form.difficulty.label }}
+      {{ form.difficulty(class="input") }}
+    </div>
+  </div>
+
+  <fieldset x-show="type === 'mcq'">
+    <legend>Choices</legend>
+    <div class="grid-2">
+      <div class="field">{{ form.choice_a.label }} {{ form.choice_a(class="input") }}</div>
+      <div class="field">{{ form.choice_b.label }} {{ form.choice_b(class="input") }}</div>
+      <div class="field">{{ form.choice_c.label }} {{ form.choice_c(class="input") }}</div>
+      <div class="field">{{ form.choice_d.label }} {{ form.choice_d(class="input") }}</div>
+    </div>
+    <div class="field">
+      {{ form.correct.label }}
+      {{ form.correct(class="input") }}
+    </div>
+  </fieldset>
+
+  <fieldset x-show="type === 'grid_in'">
+    <legend>Accepted answers</legend>
+    <div class="field">
+      {{ form.acceptable_answers.label }}
+      {{ form.acceptable_answers(class="input", placeholder="e.g. 0.5, 1/2") }}
+      <small class="muted">Comma-separated. Grading compares numerically, so "0.5" and "1/2" both match a student's "1/2".</small>
+    </div>
+  </fieldset>
+
+  <div class="button-row">
+    {{ form.submit(class="btn btn-primary") }}
+    <a href="{{ url_for('teacher.bank_detail', bank_id=bank.id) }}" class="btn btn-ghost">Cancel</a>
+  </div>
+</form>
+{% endblock %}

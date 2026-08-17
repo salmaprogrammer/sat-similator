@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Log in — SatSimilator{% endblock %}
+{% block content %}
+<section class="auth-card">
+  <h1>Log in</h1>
+  <form method="post" novalidate>
+    {{ form.hidden_tag() }}
+    <div class="field">
+      {{ form.email.label }}
+      {{ form.email(class="input", autocomplete="email") }}
+      {% for err in form.email.errors %}<small class="err">{{ err }}</small>{% endfor %}
+    </div>
+    <div class="field">
+      {{ form.password.label }}
+      {{ form.password(class="input", autocomplete="current-password") }}
+      {% for err in form.password.errors %}<small class="err">{{ err }}</small>{% endfor %}
+    </div>
+    <label class="checkbox">{{ form.remember() }} Remember me</label>
+    {{ form.submit(class="btn btn-primary btn-lg") }}
+  </form>
+  <p class="muted"><a href="{{ url_for('auth.forgot') }}">Forgot password?</a></p>
+  <p class="muted">No account? <a href="{{ url_for('auth.signup') }}">Sign up</a></p>
+</section>
+{% endblock %}

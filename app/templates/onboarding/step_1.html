@@ -1,0 +1,9 @@
+{% extends "onboarding/_wizard.html" %}
+{% block wizard %}
+  <h1>Let's set up your practice plan.</h1>
+  <p class="muted">Answer a few quick questions and we'll tailor the app to you. Takes about a minute.</p>
+  <form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+    <button type="submit" class="btn btn-primary btn-lg">Get started</button>
+  </form>
+{% endblock %}

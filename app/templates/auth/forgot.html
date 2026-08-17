@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Reset password — SatSimilator{% endblock %}
+{% block content %}
+<section class="auth-card">
+  <h1>Reset your password</h1>
+  <form method="post" novalidate>
+    {{ form.hidden_tag() }}
+    <div class="field">
+      {{ form.email.label }}
+      {{ form.email(class="input", autocomplete="email") }}
+    </div>
+    {{ form.submit(class="btn btn-primary btn-lg") }}
+  </form>
+  <p class="muted"><a href="{{ url_for('auth.login') }}">Back to log in</a></p>
+</section>
+{% endblock %}

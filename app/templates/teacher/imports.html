@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Add questions — Teacher{% endblock %}
+{% block content %}
+{% include "teacher/_nav.html" %}
+
+<div class="page-head">
+  <div>
+    <h1>Add questions</h1>
+    <p class="muted">Upload a document; we'll parse questions and answers for you to review before anything is published.</p>
+  </div>
+</div>
+
+<section class="ingest-upload card">
+  <form method="post" action="{{ url_for('teacher_ingest.upload') }}" enctype="multipart/form-data" class="upload-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+    <div class="upload-head">
+      <div>
+        <h3>Add questions</h3>
+      </div>
+      <div class="format-chips">
+        <span class="chip">.pdf</span>
+        <span class="chip">.docx</span>
+        <span class="chip">.md</span>
+      </div>
+    </div>
+
+    <label class="dropzone" for="file-input">
+      <div class="dropzone-icon">↥</div>
+      <div class="dropzone-title">Drag a file here or browse</div>
+      <div class="dropzone-hint muted">Accepted: .pdf, .docx, .md</div>
+      <input id="file-input" type="file" name="file" accept=".pdf,.docx,.md" hidden />
+    </label>
+
+    {% if banks %}
+      <div class="field">
+        <label>Target bank (optional; you can pick per-question later)</label>
+        <select name="bank_id" class="input">
+          <option value="">— choose later —</option>
+          {% for b in banks %}
+            <option value="{{ b.id }}">{{ b.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    {% endif %}
+
+    <div class="button-row">
+      <button type="submit" class="btn btn-primary">Upload &amp; parse</button>
+    </div>
+  </form>
+</section>
+
+{% if imports %}
+<h2>Recent uploads</h2>
+<table class="table">
+  <thead>
+    <tr><th>File</th><th>Type</th><th>Status</th><th>Uploaded</th><th></th></tr>
+  </thead>
+  <tbody>
+    {% for imp in imports %}
+      <tr>
+        <td><a href="{{ url_for('teacher_ingest.detail', import_id=imp.id) }}">{{ imp.filename }}</a></td>
+        <td>{{ imp.source_type.value }}</td>
+        <td>{{ imp.status.value }}{% if imp.status.value == 'failed' %} — <small class="muted">{{ imp.error_reason }}</small>{% endif %}</td>
+        <td class="muted">{{ imp.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+        <td class="right"><a href="{{ url_for('teacher_ingest.detail', import_id=imp.id) }}">Review →</a></td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
+<script>
+  // Basic file input UX
+  document.getElementById('file-input')?.addEventListener('change', (e) => {
+    const f = e.target.files[0];
+    if (f) e.target.closest('form').querySelector('.dropzone-title').textContent = f.name;
+  });
+</script>
+{% endblock %}

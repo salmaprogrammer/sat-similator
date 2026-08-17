@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Classes — Teacher{% endblock %}
+{% block content %}
+{% include "teacher/_nav.html" %}
+
+<div class="page-head">
+  <h1>My classes</h1>
+</div>
+
+<form method="post" action="{{ url_for('teacher_classes.class_new') }}" class="form-narrow">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+  <div class="field">
+    <label>New class name</label>
+    <input class="input" name="name" placeholder="e.g. Period 3 · SAT Prep" required />
+  </div>
+  <button class="btn btn-primary" type="submit">Create class</button>
+</form>
+
+{% if classrooms %}
+  <h2>Your classes</h2>
+  <table class="table">
+    <thead><tr><th>Name</th><th>Members</th><th>Join code</th><th></th></tr></thead>
+    <tbody>
+      {% for c in classrooms %}
+        <tr>
+          <td><a href="{{ url_for('teacher_classes.class_detail', classroom_id=c.id) }}">{{ c.name }}</a></td>
+          <td>{{ c.members | length }}</td>
+          <td><code>{{ c.join_code }}</code></td>
+          <td class="right"><a href="{{ url_for('teacher_classes.class_detail', classroom_id=c.id) }}">Manage →</a></td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <p class="muted">No classes yet.</p>
+{% endif %}
+{% endblock %}

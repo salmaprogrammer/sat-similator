@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}{{ classroom.name }} — Teacher{% endblock %}
+{% block content %}
+{% include "teacher/_nav.html" %}
+
+<div class="page-head">
+  <div>
+    <h1>{{ classroom.name }}</h1>
+    <p class="muted">Join code: <code>{{ classroom.join_code }}</code></p>
+  </div>
+</div>
+
+<h2>Students</h2>
+{% if classroom.members %}
+  <table class="table">
+    <thead><tr><th>Email</th><th>Joined</th><th></th></tr></thead>
+    <tbody>
+      {% for m in classroom.members %}
+        <tr>
+          <td>{{ m.student.user.email }}</td>
+          <td class="muted">{{ m.joined_at.strftime('%Y-%m-%d') }}</td>
+          <td class="right">
+            <form method="post" action="{{ url_for('teacher_classes.class_remove_member', member_id=m.id) }}"
+                  onsubmit="return confirm('Remove this student?')" style="display:inline">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+              <button class="btn btn-ghost small">Remove</button>
+            </form>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <p class="muted">No students yet.</p>
+{% endif %}
+
+<h3>Add a student</h3>
+<form method="post" action="{{ url_for('teacher_classes.class_add_student', classroom_id=classroom.id) }}" class="form-narrow">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+  <div class="field">
+    <label>Student email</label>
+    <input type="email" class="input" name="email" required />
+    <small class="muted">The student must have a SatSimilator account first.</small>
+  </div>
+  <button class="btn btn-primary" type="submit">Add student</button>
+</form>
+
+<form method="post" action="{{ url_for('teacher_classes.class_delete', classroom_id=classroom.id) }}"
+      onsubmit="return confirm('Delete this class?')" class="danger-row">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+  <button class="btn btn-danger">Delete class</button>
+</form>
+{% endblock %}

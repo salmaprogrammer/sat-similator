@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="csrf-token" content="{{ csrf_token() }}" />
+  <title>Check Your Work — Module {{ module_num }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/test_engine.css') }}" />
+</head>
+<body class="test-body">
+
+<header class="test-header">
+  <div class="left">
+    <span class="muted">{{ module.section.value | upper }} · Module {{ module_num }}</span>
+  </div>
+  <div class="center">
+    <span class="timer">{{ (seconds_remaining // 60) }}:{{ '%02d' % (seconds_remaining % 60) }} left</span>
+  </div>
+  <div class="right"></div>
+</header>
+
+<main class="review-main">
+  <div class="review-inner">
+    <h1>Check Your Work</h1>
+    <p class="muted">On test day, you won't be able to move on to the next module until time expires. For these practice questions, you can click Next when you're ready to move on.</p>
+
+    <div class="nav-legend">
+      <span class="legend-chip nav-answered"></span> Answered
+      <span class="legend-chip nav-unanswered"></span> Unanswered
+      <span class="legend-chip nav-marked"></span> For Review
+    </div>
+
+    <div class="nav-grid">
+      {% for item in nav_items %}
+        <a class="nav-cell {% if item.answered %}nav-answered{% else %}nav-unanswered{% endif %} {% if item.marked %}nav-marked{% endif %}"
+           href="{{ item.url }}">
+          {{ item.idx }}
+          {% if item.marked %}<span class="flag">🚩</span>{% endif %}
+        </a>
+      {% endfor %}
+    </div>
+  </div>
+</main>
+
+<footer class="test-footer">
+  <div class="left">
+    <a href="{{ url_for('student.dashboard') }}" class="btn btn-ghost">Save and exit</a>
+  </div>
+  <div class="center">
+    <span class="muted">{{ nav_items | selectattr('answered') | list | length }} of {{ nav_items | length }} answered</span>
+  </div>
+  <div class="right">
+    <form method="post" action="{{ submit_url }}" style="display:inline"
+          onsubmit="return confirm('Submit this module? You cannot come back to it.')">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+      <button type="submit" class="btn btn-primary btn-lg">
+        {% if module_num < total_modules %}Submit &amp; continue{% else %}Submit test{% endif %}
+      </button>
+    </form>
+  </div>
+</footer>
+</body>
+</html>

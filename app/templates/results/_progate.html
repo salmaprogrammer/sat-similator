@@ -1,0 +1,10 @@
+{# ProGate reusable partial. Usage:
+     {% set hidden = 3 %}
+     {% include 'results/_progate.html' with context %}
+   Renders a callout with an upgrade CTA when hidden > 0 and user is not Pro. #}
+{% if hidden and hidden > 0 and not is_pro %}
+  <div class="progate-callout">
+    <span>🔒 {{ hidden }} more with <strong>Pro</strong></span>
+    <a href="{{ url_for('billing.upgrade') }}" class="btn btn-primary small">Upgrade</a>
+  </div>
+{% endif %}

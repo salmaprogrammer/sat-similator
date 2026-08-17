@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit bank' if bank else 'New bank' }} — Teacher{% endblock %}
+{% block content %}
+{% include "teacher/_nav.html" %}
+
+<h1>{{ 'Edit bank' if bank else 'New bank' }}</h1>
+<form method="post" class="form-narrow">
+  {{ form.hidden_tag() }}
+  <div class="field">
+    {{ form.name.label }}
+    {{ form.name(class="input") }}
+    {% for err in form.name.errors %}<small class="err">{{ err }}</small>{% endfor %}
+  </div>
+  <label class="checkbox">{{ form.is_public() }} Publicly visible to other teachers</label>
+  <div class="button-row">
+    {{ form.submit(class="btn btn-primary") }}
+    {% if bank %}
+      <a href="{{ url_for('teacher.bank_detail', bank_id=bank.id) }}" class="btn btn-ghost">Cancel</a>
+    {% else %}
+      <a href="{{ url_for('teacher.banks') }}" class="btn btn-ghost">Cancel</a>
+    {% endif %}
+  </div>
+</form>
+
+{% if bank %}
+<form method="post" action="{{ url_for('teacher.bank_delete', bank_id=bank.id) }}"
+      onsubmit="return confirm('Delete this bank and all its questions?')" class="danger-row">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+  <button type="submit" class="btn btn-danger">Delete bank</button>
+</form>
+{% endif %}
+{% endblock %}

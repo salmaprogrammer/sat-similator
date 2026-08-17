@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}Test complete — SatSimilator{% endblock %}
+{% block content %}
+<div class="confetti-wrap">
+  <canvas id="confetti"></canvas>
+</div>
+
+<section class="complete-hero">
+  <div class="badge-large">🎉</div>
+  <h1>Congratulations!</h1>
+  <p class="lede">You've completed <strong>{{ attempt.exam_id and 'the test' }}</strong>.</p>
+  <a href="{{ url_for('results.show', attempt_id=attempt.id) }}" class="btn btn-primary btn-lg">View results</a>
+</section>
+
+<section class="survey">
+  <h2>Quick feedback?</h2>
+  <p class="muted">Takes 15 seconds. Helps us calibrate difficulty and improve the app.</p>
+
+  <form method="post" action="{{ url_for('test_engine.submit_survey', attempt_id=attempt.id) }}" x-data="{ nps: {{ attempt.feedback_nps or 'null' }}, diff: {{ attempt.feedback_difficulty or 'null' }} }">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+    <div class="survey-block">
+      <label class="survey-q">How likely are you to recommend SatSimilator to a friend?</label>
+      <div class="nps-scale">
+        {% for n in range(0, 11) %}
+          <label class="nps-bubble" :class="{ 'is-picked': nps === {{ n }} }">
+            <input type="radio" name="nps" value="{{ n }}" @change="nps = {{ n }}" />
+            <span>{{ n }}</span>
+          </label>
+        {% endfor %}
+      </div>
+      <div class="scale-labels">
+        <small class="muted">Not likely</small>
+        <small class="muted">Extremely likely</small>
+      </div>
+    </div>
+
+    <div class="survey-block">
+      <label class="survey-q">How difficult was this test?</label>
+      <div class="nps-scale">
+        {% for n in range(0, 11) %}
+          <label class="nps-bubble" :class="{ 'is-picked': diff === {{ n }} }">
+            <input type="radio" name="difficulty" value="{{ n }}" @change="diff = {{ n }}" />
+            <span>{{ n }}</span>
+          </label>
+        {% endfor %}
+      </div>
+      <div class="scale-labels">
+        <small class="muted">Too easy</small>
+        <small class="muted">Too hard</small>
+      </div>
+    </div>
+
+    <div class="survey-block">
+      <label class="survey-q">Anything else?</label>
+      <textarea name="text" class="input" rows="3" placeholder="Optional…">{{ attempt.feedback_text or '' }}</textarea>
+    </div>
+
+    <div class="button-row">
+      <button type="submit" class="btn btn-primary">Submit &amp; view results</button>
+      <a href="{{ url_for('results.show', attempt_id=attempt.id) }}" class="btn btn-ghost">Skip</a>
+    </div>
+  </form>
+</section>
+
+<script>
+  // Tiny confetti burst — no library required
+  (function() {
+    const c = document.getElementById("confetti");
+    if (!c) return;
+    const ctx = c.getContext("2d");
+    const dpr = window.devicePixelRatio || 1;
+    function size() { c.width = innerWidth * dpr; c.height = 200 * dpr; c.style.width = innerWidth+"px"; c.style.height="200px"; }
+    size();
+    const COLORS = ["#2563eb", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"];
+    const N = 120;
+    const parts = Array.from({length: N}, () => ({
+      x: Math.random() * c.width,
+      y: Math.random() * -c.height,
+      vx: (Math.random() - 0.5) * 2 * dpr,
+      vy: (1 + Math.random() * 3) * dpr,
+      s: (3 + Math.random() * 5) * dpr,
+      r: Math.random() * Math.PI * 2,
+      dr: (Math.random() - 0.5) * 0.2,
+      color: COLORS[Math.floor(Math.random() * COLORS.length)],
+    }));
+    let t = 0;
+    (function raf() {
+      t++;
+      ctx.clearRect(0, 0, c.width, c.height);
+      for (const p of parts) {
+        p.x += p.vx; p.y += p.vy; p.r += p.dr;
+        if (p.y > c.height + 20) { p.y = -20; p.x = Math.random() * c.width; }
+        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r);
+        ctx.fillStyle = p.color; ctx.fillRect(-p.s/2, -p.s/2, p.s, p.s);
+        ctx.restore();
+      }
+      if (t < 400) requestAnimationFrame(raf);
+    })();
+  })();
+</script>
+{% endblock %}

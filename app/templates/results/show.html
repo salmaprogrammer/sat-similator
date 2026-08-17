@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+{% block title %}Your results — SatSimilator{% endblock %}
+{% block content %}
+
+<nav class="crumbs muted">
+  <a href="{{ url_for('student.dashboard') }}">Dashboard</a> ›
+  <a href="{{ url_for('student.tests') }}">Tests</a> ›
+  <span>Results</span>
+</nav>
+
+<div class="page-head">
+  <div>
+    <h1>Your score: <span class="score-total">{{ score.total }}</span></h1>
+    <p class="muted">All modules · Completed {{ attempt.completed_at.strftime('%b %-d, %Y') if attempt.completed_at }}</p>
+  </div>
+  <div class="button-row">
+    <a href="{{ url_for('results.printable', attempt_id=attempt.id) }}" class="btn btn-ghost" target="_blank">Download report</a>
+  </div>
+</div>
+
+<div class="callout callout-info">
+  Predicted score is illustrative. Real SAT scores depend on adaptive Module-2 selection and the official scaled-score curve.
+</div>
+
+<section class="results-overview">
+  <div class="score-cards">
+    <article class="score-card">
+      <div class="label">Reading & Writing</div>
+      <div class="big">{{ score.rw }}</div>
+      <div class="range muted">200–800</div>
+    </article>
+    <article class="score-card">
+      <div class="label">Math</div>
+      <div class="big">{{ score.math }}</div>
+      <div class="range muted">200–800</div>
+    </article>
+    <article class="score-card score-card-total">
+      <div class="label">Total</div>
+      <div class="big">{{ score.total }}</div>
+      <div class="range muted">400–1600</div>
+    </article>
+  </div>
+
+  {# Bell curve — Pro-gated #}
+  <div class="pro-section {% if not is_pro %}pro-locked{% endif %}">
+    <h3>You vs. platform average</h3>
+    {% if is_pro %}
+      <div class="bell-curve">
+        <div class="bell" style="--pct: {{ ((score.total - 400) / 1200 * 100) | round }}%">
+          <div class="you-marker">You: {{ score.total }}</div>
+        </div>
+        <p class="muted small">Platform average: 1120 · Top 25%: 1310 · Top 10%: 1440</p>
+      </div>
+    {% else %}
+      <div class="lock-preview">
+        <p class="muted">🔒 See how you stack up against other students. <a href="{{ url_for('billing.upgrade') }}">Upgrade to Pro</a>.</p>
+      </div>
+    {% endif %}
+  </div>
+</section>
+
+<section class="stat-grid">
+  <div class="stat-card">
+    <div class="stat-num">{{ stats.correct }}</div>
+    <div class="stat-label muted">Correct</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-num">{{ stats.wrong }}</div>
+    <div class="stat-label muted">Wrong</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-num">{{ (stats.accuracy * 100) | round }}%</div>
+    <div class="stat-label muted">Accuracy</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-num">{{ stats.unattempted }}</div>
+    <div class="stat-label muted">Unattempted</div>
+  </div>
+</section>
+
+<section class="per-module">
+  <h2>Per-module breakdown</h2>
+  {% for am in attempt.attempt_modules %}
+    <article class="module-row">
+      <div class="module-label">
+        <strong>{{ am.resolved_difficulty_label or ('Module ' ~ loop.index) }}</strong>
+        {% if am.effective_time_limit_seconds %}
+          <small class="muted"> — {{ am.effective_time_limit_seconds // 60 }} min limit</small>
+        {% endif %}
+      </div>
+      {# Per-question grid — Pro-gated in free tier #}
+      {% if is_pro %}
+        <div class="qgrid">
+          {% for g in grid if g.section == 'rw' and loop.index0 < 27 %}{# rough per-module split #}{% endfor %}
+          {% for g in grid %}
+            <span class="qgrid-cell {% if g.correct %}qc-ok{% elif g.wrong %}qc-wrong{% else %}qc-none{% endif %}"
+                  title="{{ g.section }} q{{ g.idx }} · {{ 'correct' if g.correct else 'wrong' if g.wrong else 'skipped' }}"></span>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="lock-preview inline">
+          <span class="muted">🔒 Per-question grid available with Pro.</span>
+        </div>
+      {% endif %}
+    </article>
+  {% endfor %}
+</section>
+
+<section class="skill-breakdown">
+  <h2>Skill breakdown</h2>
+
+  <div class="split-2">
+    <div>
+      <h3>5 topics costing the most points</h3>
+      {% if topics_visible %}
+        <ol class="ranked-list">
+          {% for row in topics_visible %}
+            <li>
+              <span class="rank-topic">{{ row.topic }}</span>
+              <span class="rank-detail muted">−{{ row.wrong }} pts · {{ ((row.accuracy or 0) * 100) | round }}% correct</span>
+            </li>
+          {% endfor %}
+        </ol>
+        {% with hidden = topics_hidden %}
+          {% include "results/_progate.html" %}
+        {% endwith %}
+      {% else %}
+        <p class="muted">No topics tagged yet.</p>
+      {% endif %}
+    </div>
+
+    <div>
+      <h3>Accuracy by topic</h3>
+      {% if bars_visible %}
+        <ul class="bar-list">
+          {% for row in bars_visible %}
+            <li>
+              <div class="bar-head">
+                <span>{{ row.topic }}</span>
+                <span class="muted">{{ (row.accuracy * 100) | round }}%</span>
+              </div>
+              <div class="bar-track"><div class="bar-fill" style="width: {{ (row.accuracy * 100) | round }}%"></div></div>
+            </li>
+          {% endfor %}
+        </ul>
+        {% with hidden = bars_hidden %}
+          {% include "results/_progate.html" %}
+        {% endwith %}
+      {% else %}
+        <p class="muted">No accuracy data yet.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <div>
+    <h3>Time share by difficulty</h3>
+    {% if is_pro %}
+      <div class="donut" style="--easy: {{ per_difficulty_time.easy or 0 }}; --med: {{ per_difficulty_time.medium or 0 }}; --hard: {{ per_difficulty_time.hard or 0 }}">
+        <ul class="donut-legend">
+          <li><span class="dot dot-easy"></span> Easy: {{ per_difficulty_time.easy or 0 }}s avg</li>
+          <li><span class="dot dot-med"></span> Medium: {{ per_difficulty_time.medium or 0 }}s avg</li>
+          <li><span class="dot dot-hard"></span> Hard: {{ per_difficulty_time.hard or 0 }}s avg</li>
+        </ul>
+      </div>
+    {% else %}
+      <div class="lock-preview">
+        <span class="muted">🔒 Time-share by difficulty — Pro only.</span>
+        <a href="#" class="btn btn-primary small">Upgrade</a>
+      </div>
+    {% endif %}
+  </div>
+</section>
+
+{% if not is_pro %}
+<div class="upgrade-banner">
+  <div>
+    <strong>Unlock the full report.</strong>
+    <span class="muted">Bell curve, per-question grid, full skill breakdown, and time-share.</span>
+  </div>
+  <a href="{{ url_for('billing.upgrade') }}" class="btn btn-primary">Upgrade to Pro</a>
+</div>
+{% endif %}
+{% endblock %}

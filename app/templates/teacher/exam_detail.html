@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}{{ exam.name }} — Teacher{% endblock %}
+{% block content %}
+{% include "teacher/_nav.html" %}
+
+<div class="page-head">
+  <div>
+    <h1>{{ exam.name }}</h1>
+    <p class="muted">{{ exam.modules | length }} modules · {{ 'Published' if exam.is_published else 'Draft' }}</p>
+  </div>
+  <div class="button-row">
+    <a href="{{ url_for('teacher.exam_edit', exam_id=exam.id) }}" class="btn btn-ghost">Edit exam</a>
+    <a href="{{ url_for('teacher.module_new', exam_id=exam.id) }}" class="btn btn-primary">Add module</a>
+    <form method="post" action="{{ url_for('teacher.exam_publish', exam_id=exam.id) }}" style="display:inline">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+      <button class="btn {% if exam.is_published %}btn-ghost{% else %}btn-primary{% endif %}">
+        {{ 'Unpublish' if exam.is_published else 'Publish' }}
+      </button>
+    </form>
+  </div>
+</div>
+
+{% for module in exam.modules %}
+  <section class="module-card">
+    <header>
+      <h3>{{ module.section.value | upper }} · Module {{ module.module_number }}
+        <small class="muted">— {{ module.time_limit_seconds // 60 }} min
+          {%- if module.calculator_allowed %} · calculator{% endif %}
+          {%- if module.difficulty_variant.value != 'fixed' %} · {{ module.difficulty_variant.value }} variant{% endif %}
+        </small>
+      </h3>
+      <form method="post" action="{{ url_for('teacher.module_delete', module_id=module.id) }}"
+            onsubmit="return confirm('Delete this module?')" style="display:inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <button class="btn btn-ghost small">Remove module</button>
+      </form>
+    </header>
+
+    {% if module.module_questions %}
+      <ol class="module-questions">
+        {% for mq in module.module_questions %}
+          <li>
+            <span class="pill">#{{ loop.index }}</span>
+            <span class="qstem-preview">{{ mq.question.stem[:100] }}{% if mq.question.stem|length > 100 %}…{% endif %}</span>
+            <form method="post" action="{{ url_for('teacher.module_question_delete', mq_id=mq.id) }}" style="display:inline">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+              <button class="btn btn-ghost small">Remove</button>
+            </form>
+          </li>
+        {% endfor %}
+      </ol>
+    {% else %}
+      <p class="muted">No questions in this module yet.</p>
+    {% endif %}
+
+    <details class="add-question">
+      <summary>Add a question to this module</summary>
+      {% set total = namespace(count=0) %}
+      {% for bank in banks %}
+        {% if bank.questions %}
+          {% set total.count = total.count + bank.questions | length %}
+          <div class="bank-group">
+            <h4>{{ bank.name }}</h4>
+            {% for q in bank.questions %}
+              <form method="post" action="{{ url_for('teacher.module_add_question', module_id=module.id) }}" class="inline-add">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                <input type="hidden" name="question_id" value="{{ q.id }}" />
+                <span class="qstem-preview">{{ q.stem[:80] }}{% if q.stem|length > 80 %}…{% endif %}</span>
+                <button class="btn btn-ghost small">Add</button>
+              </form>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endfor %}
+      {% if total.count == 0 %}
+        <p class="muted">No questions available. <a href="{{ url_for('teacher.banks') }}">Add some to a bank</a> first.</p>
+      {% endif %}
+    </details>
+  </section>
+{% else %}
+  <p class="muted">No modules yet. A full SAT has 4 modules (RW-1, RW-2, Math-1, Math-2).</p>
+{% endfor %}
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Add module — Teacher{% endblock %}
+{% block content %}
+{% include "teacher/_nav.html" %}
+
+<h1>Add module to {{ exam.name }}</h1>
+<form method="post" class="form-narrow">
+  {{ form.hidden_tag() }}
+  <div class="grid-2">
+    <div class="field">{{ form.section.label }} {{ form.section(class="input") }}</div>
+    <div class="field">{{ form.module_number.label }} {{ form.module_number(class="input") }}</div>
+  </div>
+  <div class="grid-2">
+    <div class="field">
+      {{ form.time_limit_seconds.label }}
+      {{ form.time_limit_seconds(class="input") }}
+      <small class="muted">Real SAT modules are 32 min RW / 35 min Math (1920 / 2100 sec).</small>
+    </div>
+    <div class="field">{{ form.difficulty_variant.label }} {{ form.difficulty_variant(class="input") }}</div>
+  </div>
+  <label class="checkbox">{{ form.calculator_allowed() }} Calculator allowed</label>
+  <div class="button-row">
+    {{ form.submit(class="btn btn-primary") }}
+    <a href="{{ url_for('teacher.exam_detail', exam_id=exam.id) }}" class="btn btn-ghost">Cancel</a>
+  </div>
+</form>
+{% endblock %}

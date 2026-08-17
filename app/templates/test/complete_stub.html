@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Test complete{% endblock %}
+{% block content %}
+<section class="wizard">
+  <h1>Test submitted 🎉</h1>
+  <p class="muted">Phase 9 will show the confetti + survey; Phase 10 will show the full results page.</p>
+  <a href="{{ url_for('student.dashboard') }}" class="btn btn-primary">Back to dashboard</a>
+</section>
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends "onboarding/_wizard.html" %}
+{% block wizard %}
+  <h1>Which days will you study?</h1>
+  <p class="muted">Pick the days that fit your schedule. You can change these anytime.</p>
+  <form method="post">
+    {{ form.hidden_tag() }}
+    <div class="day-grid">
+      {% for value, label in form.days.choices %}
+        <label class="day-chip">
+          <input type="checkbox" name="days" value="{{ value }}"
+                 {% if value in (form.days.data or []) %}checked{% endif %} />
+          <span>{{ label }}</span>
+        </label>
+      {% endfor %}
+    </div>
+    {{ form.submit(class="btn btn-primary btn-lg") }}
+  </form>
+{% endblock %}

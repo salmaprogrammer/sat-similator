@@ -1,0 +1,13 @@
+{% extends "onboarding/_wizard.html" %}
+{% block wizard %}
+  <h1>Want study reminders?</h1>
+  <p class="muted">We'll send you a nudge on your study days plus occasional product updates. Unsubscribe anytime.</p>
+  <form method="post">
+    {{ form.hidden_tag() }}
+    <label class="checkbox big">
+      {{ form.email_opt_in() }}
+      <span>Send me study reminders and product updates</span>
+    </label>
+    {{ form.submit(class="btn btn-primary btn-lg") }}
+  </form>
+{% endblock %}

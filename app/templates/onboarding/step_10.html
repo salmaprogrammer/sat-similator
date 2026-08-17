@@ -1,0 +1,12 @@
+{% extends "onboarding/_wizard.html" %}
+{% block wizard %}
+  <h1>Sync your study plan to Google Calendar?</h1>
+  <p class="muted">Optional. We'll add your study sessions and test-day reminder to your calendar.</p>
+  <form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+    <div class="button-row">
+      <button class="btn btn-primary btn-lg" type="submit">Connect Google Calendar</button>
+      <button class="btn btn-ghost" type="submit" name="skip" value="1">Skip for now</button>
+    </div>
+  </form>
+{% endblock %}

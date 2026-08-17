@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Connect Google — SatSimilator{% endblock %}
+{% block content %}
+<h1>Connect Google</h1>
+{% if configured %}
+  <p class="muted">Grant SatSimilator access to add practice results to a Sheet and study sessions to your Calendar.</p>
+  <form method="post" action="{{ url_for('integrations.google_oauth_start') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+    <button type="submit" class="btn btn-primary btn-lg">Continue with Google</button>
+  </form>
+{% else %}
+  <div class="callout callout-info">
+    <p><strong>Not configured yet.</strong> Google integrations require OAuth credentials.</p>
+    <ol>
+      <li>Create a Google Cloud project and OAuth client (Web application).</li>
+      <li>Add <code>{{ url_for('integrations.google_oauth_start', _external=True) }}/callback</code> to authorized redirect URIs.</li>
+      <li>Set <code>GOOGLE_CLIENT_ID</code> and <code>GOOGLE_CLIENT_SECRET</code> in <code>.env</code> and restart the app.</li>
+    </ol>
+  </div>
+{% endif %}
+<p><a href="{{ url_for('student.dashboard') }}" class="link">← Back to dashboard</a></p>
+{% endblock %}

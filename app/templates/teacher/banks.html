@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Question banks — Teacher{% endblock %}
+{% block content %}
+{% include "teacher/_nav.html" %}
+
+<div class="page-head">
+  <h1>Question banks</h1>
+  <a class="btn btn-primary" href="{{ url_for('teacher.bank_new') }}">New bank</a>
+</div>
+
+{% if banks %}
+  <table class="table">
+    <thead>
+      <tr><th>Name</th><th>Questions</th><th>Visibility</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for b in banks %}
+        <tr>
+          <td><a href="{{ url_for('teacher.bank_detail', bank_id=b.id) }}">{{ b.name }}</a></td>
+          <td>{{ b.questions | length }}</td>
+          <td>{{ 'Public' if b.is_public else 'Private' }}</td>
+          <td class="right">
+            <a href="{{ url_for('teacher.bank_edit', bank_id=b.id) }}">Edit</a>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <p class="muted">No banks yet. Create one to start adding questions.</p>
+{% endif %}
+{% endblock %}

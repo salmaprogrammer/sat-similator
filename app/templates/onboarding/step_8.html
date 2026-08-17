@@ -1,0 +1,12 @@
+{% extends "onboarding/_wizard.html" %}
+{% block wizard %}
+  <h1>When do you want to start studying?</h1>
+  <form method="post">
+    {{ form.hidden_tag() }}
+    <div class="field">
+      {{ form.study_start.label }}
+      {{ form.study_start(class="input", type="date") }}
+    </div>
+    {{ form.submit(class="btn btn-primary btn-lg") }}
+  </form>
+{% endblock %}

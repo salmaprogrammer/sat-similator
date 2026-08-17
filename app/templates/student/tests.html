@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Practice tests — SatSimilator{% endblock %}
+{% block content %}
+<h1>Practice tests</h1>
+<p class="muted">Full-length, timed, with the tools you'll have on test day.</p>
+
+{% if predicted %}
+  <h2>Predicted tests</h2>
+  <div class="dashboard-grid">
+    {% for exam in predicted %}
+      <article class="card">
+        <div class="pill">Predicted paper</div>
+        <h3>{{ exam.name }}</h3>
+        <p class="muted">{{ exam.modules | length }} modules</p>
+        {% if exam.modules %}
+          <a href="{{ url_for('student.accommodations', exam_id=exam.id) }}" class="btn btn-primary">Start test</a>
+        {% else %}
+          <p class="muted small">No modules yet.</p>
+        {% endif %}
+      </article>
+    {% endfor %}
+  </div>
+{% endif %}
+
+{% if custom %}
+  <h2>Teacher tests</h2>
+  <div class="dashboard-grid">
+    {% for exam in custom %}
+      <article class="card">
+        <h3>{{ exam.name }}</h3>
+        <p class="muted">{{ exam.modules | length }} modules</p>
+        {% if exam.modules %}
+          <a href="{{ url_for('student.accommodations', exam_id=exam.id) }}" class="btn btn-primary">Start test</a>
+        {% else %}
+          <p class="muted small">No modules yet.</p>
+        {% endif %}
+      </article>
+    {% endfor %}
+  </div>
+{% endif %}
+
+{% if not predicted and not custom %}
+  <p class="muted">No published tests yet.</p>
+{% endif %}
+{% endblock %}

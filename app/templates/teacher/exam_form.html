@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit exam' if exam else 'New exam' }} — Teacher{% endblock %}
+{% block content %}
+{% include "teacher/_nav.html" %}
+
+<h1>{{ 'Edit exam' if exam else 'New exam' }}</h1>
+<form method="post" class="form-narrow">
+  {{ form.hidden_tag() }}
+  <div class="field">
+    {{ form.name.label }}
+    {{ form.name(class="input") }}
+  </div>
+  <label class="checkbox">{{ form.is_predicted_test() }} Predicted-paper test (surfaced in student library)</label>
+  <div class="button-row">
+    {{ form.submit(class="btn btn-primary") }}
+    <a href="{{ url_for('teacher.exams') }}" class="btn btn-ghost">Cancel</a>
+  </div>
+</form>
+
+{% if exam %}
+<form method="post" action="{{ url_for('teacher.exam_delete', exam_id=exam.id) }}"
+      onsubmit="return confirm('Delete this exam?')" class="danger-row">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+  <button type="submit" class="btn btn-danger">Delete exam</button>
+</form>
+{% endif %}
+{% endblock %}

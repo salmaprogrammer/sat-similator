@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Break — Module {{ module_num }}{% endblock %}
+{% block content %}
+<section class="wizard">
+  <h1>Between-module break</h1>
+  <p class="muted">Phase 7 will style this as the dark-themed break screen with a server-authoritative countdown.</p>
+  <a href="{{ url_for('test_engine.question', attempt_id=attempt.id, module_num=module_num, q_idx=1) }}"
+     class="btn btn-primary">Resume testing</a>
+</section>
+{% endblock %}

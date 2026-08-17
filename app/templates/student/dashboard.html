@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — SatSimilator{% endblock %}
+{% block content %}
+<section class="dashboard-hero">
+  <h1>Welcome back{% if current_user.email %}, {{ current_user.email.split('@')[0] }}{% endif %}.</h1>
+  {% if student.test_date %}
+    <p class="muted">
+      Test date <strong>{{ student.test_date }}</strong>
+      {% if days_until_test is not none %}
+        · {% if days_until_test > 0 %}<strong>{{ days_until_test }}</strong> days to go
+        {% elif days_until_test == 0 %}<strong>today</strong>
+        {% else %}<strong>past</strong>{% endif %}
+      {% endif %}
+      {% if student.goal_score %} · goal <strong>{{ student.goal_score }}</strong>{% endif %}
+    </p>
+  {% endif %}
+</section>
+
+<section class="dashboard-grid">
+  <article class="card card-lg">
+    <h3>Take a full-length test</h3>
+    <p class="muted">Predicted-paper-style, timed, with all the tools you'd have on test day.</p>
+    <a href="{{ url_for('student.tests') }}" class="btn btn-primary">Browse tests</a>
+  </article>
+
+  <article class="card">
+    <h3>Your last result</h3>
+    {% if latest_completed and latest_completed.score %}
+      <p class="score-total-inline">{{ latest_completed.score.total }}</p>
+      <p class="muted small">R&W {{ latest_completed.score.rw }} · Math {{ latest_completed.score.math }}</p>
+      <a href="{{ url_for('results.show', attempt_id=latest_completed.id) }}" class="btn btn-ghost small">View report</a>
+    {% else %}
+      <p class="muted">No completed tests yet.</p>
+    {% endif %}
+  </article>
+
+  <article class="card">
+    <h3>Study streak</h3>
+    {% if student.study_days and student.study_days.get('days') %}
+      <p class="muted">Study days: {{ student.study_days.days | join(', ') }}</p>
+    {% else %}
+      <p class="muted">Set a study cadence to keep it going.</p>
+    {% endif %}
+    <p class="muted small">{{ completed_count }} completed test{{ '' if completed_count == 1 else 's' }} so far.</p>
+  </article>
+</section>
+
+{% if recent_attempts %}
+<section>
+  <h2>Recent activity</h2>
+  <table class="table">
+    <thead><tr><th>Started</th><th>Status</th><th>Score</th><th></th></tr></thead>
+    <tbody>
+      {% for a in recent_attempts %}
+        <tr>
+          <td>{{ a.started_at.strftime('%Y-%m-%d %H:%M') }}</td>
+          <td>{{ a.status.value }}</td>
+          <td>{{ a.score.total if a.score else '—' }}</td>
+          <td class="right">
+            {% if a.status.value == 'completed' %}
+              <a href="{{ url_for('results.show', attempt_id=a.id) }}">View →</a>
+            {% elif a.status.value == 'in_progress' %}
+              <a href="{{ url_for('test_engine.question', attempt_id=a.id, module_num=1, q_idx=1) }}">Resume →</a>
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endif %}
+
+<section>
+  <h2>Integrations</h2>
+  <div class="dashboard-grid">
+    <article class="card">
+      <h3>Google Calendar / Sheets</h3>
+      <p class="muted">Push your practice results to a Google Sheet, and add study sessions to your calendar.</p>
+      <a href="{{ url_for('integrations.google_connect') }}" class="btn btn-ghost">Connect Google</a>
+    </article>
+    <article class="card">
+      <h3>{{ 'Pro until ' ~ student.pro_expires_at.strftime('%Y-%m-%d') if student.is_pro else 'Upgrade to Pro' }}</h3>
+      {% if student.is_pro %}
+        <p class="muted">You have the full report and unlimited breakdowns.</p>
+      {% else %}
+        <p class="muted">Unlock the bell curve, full skill breakdown, and per-question grid.</p>
+        <a href="{{ url_for('billing.upgrade') }}" class="btn btn-primary">See plans</a>
+      {% endif %}
+    </article>
+  </div>
+</section>
+{% endblock %}

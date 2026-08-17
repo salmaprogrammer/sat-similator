@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Teacher — SatSimilator{% endblock %}
+{% block content %}
+<section>
+  <h1>Teacher home</h1>
+  <p class="muted">Manage your question banks, build exams, and review student results.</p>
+</section>
+<section class="dashboard-grid">
+  <article class="card">
+    <h3>Question banks</h3>
+    <p class="muted">Add and organize questions.</p>
+    <a href="{{ url_for('teacher.banks') }}" class="btn btn-primary">Open banks</a>
+  </article>
+  <article class="card">
+    <h3>Exams</h3>
+    <p class="muted">Assemble fixed-form exams from your banks.</p>
+    <a href="{{ url_for('teacher.exams') }}" class="btn btn-primary">Manage exams</a>
+  </article>
+  <article class="card">
+    <h3>Ingestion</h3>
+    <p class="muted">Upload PDFs / DOCX / Markdown and let the app parse questions and answers for review.</p>
+    <a href="{{ url_for('teacher_ingest.index') }}" class="btn btn-primary">Import questions</a>
+  </article>
+</section>
+{% endblock %}

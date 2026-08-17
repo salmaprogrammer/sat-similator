@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}{{ bank.name }} — Teacher{% endblock %}
+{% block content %}
+{% include "teacher/_nav.html" %}
+
+<div class="page-head">
+  <div>
+    <h1>{{ bank.name }}</h1>
+    <p class="muted">{{ bank.questions | length }} questions · {{ 'Public' if bank.is_public else 'Private' }}</p>
+  </div>
+  <div class="button-row">
+    <a href="{{ url_for('teacher.bank_edit', bank_id=bank.id) }}" class="btn btn-ghost">Edit bank</a>
+    <a href="{{ url_for('teacher.question_new', bank_id=bank.id) }}" class="btn btn-primary">Add question</a>
+  </div>
+</div>
+
+{% if bank.questions %}
+  <ul class="question-list">
+    {% for q in bank.questions %}
+      <li>
+        <div class="qmeta">
+          <span class="pill">{{ q.type.value }}</span>
+          {% if q.topic %}<span class="pill pill-muted">{{ q.topic }}</span>{% endif %}
+          <span class="pill pill-muted">{{ q.difficulty.value }}</span>
+        </div>
+        <div class="qstem">{{ q.stem }}</div>
+        {% if q.type.value == 'mcq' %}
+          <ol class="choices">
+            {% for c in q.choices %}
+              <li><strong>{{ c.label }}.</strong> {{ c.text }} {% if c.is_correct %}<span class="ok">✓</span>{% endif %}</li>
+            {% endfor %}
+          </ol>
+        {% else %}
+          <p class="muted">Accepted: <code>{{ q.acceptable_answers or '(none set)' }}</code></p>
+        {% endif %}
+        <div class="button-row small-buttons">
+          <a href="{{ url_for('teacher.question_edit', question_id=q.id) }}" class="btn btn-ghost">Edit</a>
+          <form method="post" action="{{ url_for('teacher.question_delete', question_id=q.id) }}"
+                onsubmit="return confirm('Delete this question?')" style="display:inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <button type="submit" class="btn btn-ghost">Delete</button>
+          </form>
+        </div>
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p class="muted">No questions yet.</p>
+{% endif %}
+{% endblock %}

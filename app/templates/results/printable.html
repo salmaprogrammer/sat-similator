@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Report — Attempt {{ attempt.id }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}" />
+  <style>
+    body { max-width: 800px; margin: 24px auto; padding: 24px; }
+    .no-print { display: block; }
+    @media print {
+      .no-print { display: none; }
+      body { margin: 0; }
+    }
+    h1 { margin: 0; }
+    .score-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 16px 0; }
+    .score-card { border: 1px solid #ccc; padding: 16px; text-align: center; border-radius: 8px; }
+    .score-card .big { font-size: 36px; font-weight: 700; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 8px; border-bottom: 1px solid #ddd; text-align: left; }
+  </style>
+</head>
+<body>
+  <div class="no-print">
+    <button onclick="window.print()">Print / Save as PDF</button>
+  </div>
+
+  <h1>SatSimilator — Score Report</h1>
+  <p>Completed {{ attempt.completed_at.strftime('%B %-d, %Y') if attempt.completed_at }}</p>
+
+  <div class="score-cards">
+    <div class="score-card"><div>R&amp;W</div><div class="big">{{ score.rw }}</div></div>
+    <div class="score-card"><div>Math</div><div class="big">{{ score.math }}</div></div>
+    <div class="score-card"><div>Total</div><div class="big">{{ score.total }}</div></div>
+  </div>
+
+  <h2>Overall</h2>
+  <table>
+    <tr><td>Correct</td><td>{{ stats.correct }}</td></tr>
+    <tr><td>Wrong</td><td>{{ stats.wrong }}</td></tr>
+    <tr><td>Unattempted</td><td>{{ stats.unattempted }}</td></tr>
+    <tr><td>Accuracy</td><td>{{ (stats.accuracy * 100) | round }}%</td></tr>
+  </table>
+
+  <h2>Topics costing the most points</h2>
+  <table>
+    <tr><th>Topic</th><th>Wrong</th><th>Accuracy</th></tr>
+    {% for row in topics_visible %}
+      <tr><td>{{ row.topic }}</td><td>{{ row.wrong }}</td><td>{{ ((row.accuracy or 0) * 100) | round }}%</td></tr>
+    {% endfor %}
+  </table>
+
+  <h2>Time by difficulty (avg seconds per question)</h2>
+  <table>
+    {% for d, secs in per_difficulty_time.items() %}
+      <tr><td>{{ d | title }}</td><td>{{ secs }}s</td></tr>
+    {% endfor %}
+  </table>
+</body>
+</html>

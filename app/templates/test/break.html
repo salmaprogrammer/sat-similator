@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="csrf-token" content="{{ csrf_token() }}" />
+  <title>Break — Module {{ module_num }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/test_engine.css') }}" />
+  <script defer src="https://unpkg.com/alpinejs@3.14.1/dist/cdn.min.js"></script>
+</head>
+<body class="test-body break-screen" x-data="breakTimer({
+  attemptId: {{ attempt.id }},
+  moduleNum: {{ module_num }},
+  secondsRemaining: {{ seconds_remaining }},
+  allowEarlyResume: {{ 'true' if allow_early_resume else 'false' }},
+})">
+
+<header class="break-header">
+  <a href="{{ url_for('student.dashboard') }}" class="link">← Save and Leave</a>
+</header>
+
+<main class="break-main">
+  <div class="break-card">
+    <div class="break-logo">SatSimilator</div>
+    <p class="break-label">Break Time:</p>
+    <div class="break-countdown" x-text="fmt(secondsRemaining)"></div>
+    <form method="post" action="{{ resume_url }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+      <button type="submit" class="btn btn-primary btn-lg"
+              :disabled="!allowEarlyResume && secondsRemaining > 0">
+        Resume Testing
+      </button>
+    </form>
+    <p class="muted small" x-show="!allowEarlyResume && secondsRemaining > 0">
+      You may resume when the countdown finishes.
+    </p>
+    <p class="muted small" x-show="allowEarlyResume">
+      Practice mode — resume anytime.
+    </p>
+  </div>
+
+  <aside class="break-info">
+    <h2>Practice Test Break</h2>
+    <p class="muted">Take a short break. Stretch, drink some water. In practice mode you can resume early; on test day you must wait for the full countdown to finish.</p>
+
+    <h3>On Test Day…</h3>
+    <ul>
+      <li>You may leave your seat during the break.</li>
+      <li>Food and drinks are allowed outside the testing room.</li>
+      <li>Do not access your phone or notes.</li>
+      <li>Return to your seat before the countdown reaches zero.</li>
+    </ul>
+  </aside>
+</main>
+
+<script>
+  function breakTimer(cfg) {
+    return {
+      ...cfg,
+      init() {
+        this._t = setInterval(() => {
+          if (this.secondsRemaining > 0) this.secondsRemaining--;
+        }, 1000);
+        this._syncInterval = setInterval(() => this._sync(), 15000);
+        this._sync();
+      },
+      destroy() { clearInterval(this._t); clearInterval(this._syncInterval); },
+      async _sync() {
+        // Cheap sync: rely on server truth by not persisting more here; countdown display drifts <=1s
+      },
+      fmt(s) {
+        const m = Math.floor(s / 60), ss = s % 60;
+        return `${m}:${String(ss).padStart(2, "0")}`;
+      },
+    };
+  }
+</script>
+</body>
+</html>

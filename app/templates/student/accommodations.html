@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Extra time? — SatSimilator{% endblock %}
+{% block content %}
+<section class="accommodations">
+  <h1>Do you need extra time?</h1>
+  <p class="muted">Standard time is the default. Pick 1.5× or 2× if you're approved for extended time accommodations.</p>
+
+  <form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+    <div class="radio-cards big">
+      {% set choices = [
+        (Accommodation.STANDARD.value, 'Standard time', 'The default. Timing matches the real test.'),
+        (Accommodation.TIME_AND_A_HALF.value, 'Time and a half (1.5×)', '50% more time per module.'),
+        (Accommodation.DOUBLE_TIME.value, 'Double time (2×)', '100% more time per module.'),
+      ] %}
+      {% for value, label, hint in choices %}
+        <label class="radio-card">
+          <input type="radio" name="accommodation" value="{{ value }}"
+                 {% if student.accommodation.value == value %}checked{% elif loop.first and student.accommodation is none %}checked{% endif %} />
+          <div>
+            <div class="radio-title">{{ label }}</div>
+            <div class="radio-hint muted small">{{ hint }}</div>
+          </div>
+        </label>
+      {% endfor %}
+    </div>
+    <div class="button-row">
+      <a href="{{ url_for('student.tests') }}" class="btn btn-ghost">Cancel</a>
+      <button type="submit" class="btn btn-primary btn-lg">Continue</button>
+    </div>
+  </form>
+</section>
+{% endblock %}

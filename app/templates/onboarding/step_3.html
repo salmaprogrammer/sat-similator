@@ -1,0 +1,13 @@
+{% extends "onboarding/_wizard.html" %}
+{% block wizard %}
+  <h1>When's your test?</h1>
+  <p class="muted">We'll build a countdown and pace your study plan accordingly. You can change or skip this later.</p>
+  <form method="post">
+    {{ form.hidden_tag() }}
+    <div class="field">
+      {{ form.test_date.label }}
+      {{ form.test_date(class="input", type="date") }}
+    </div>
+    {{ form.submit(class="btn btn-primary btn-lg") }}
+  </form>
+{% endblock %}

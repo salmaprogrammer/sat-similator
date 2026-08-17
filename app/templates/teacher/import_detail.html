@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+{% block title %}Review extracted questions — Teacher{% endblock %}
+{% block content %}
+{% include "teacher/_nav.html" %}
+
+<section class="ingest-upload card compact">
+  <div class="upload-head">
+    <div>
+      <h3>Add questions</h3>
+    </div>
+    <div class="format-chips">
+      <span class="chip">.pdf</span>
+      <span class="chip">.docx</span>
+      <span class="chip">.md</span>
+    </div>
+  </div>
+  <div class="dropzone dropzone-done">
+    <div class="dropzone-icon">↥</div>
+    <div class="dropzone-title">Drag a file here or browse</div>
+    <div class="dropzone-hint muted">
+      {{ imp.filename }} — parsed {{ imp.items | length }} questions,
+      {{ imp.items | selectattr('answer_source.value', 'equalto', 'extracted') | list | length }} with answers detected
+    </div>
+  </div>
+</section>
+
+{% set needs_review = imp.items | rejectattr('answer_source.value', 'equalto', 'extracted') | list | length %}
+
+<div class="page-head">
+  <div>
+    <h2>Review extracted questions</h2>
+  </div>
+  <p class="muted">{{ needs_review }} of {{ imp.items | length }} need review</p>
+</div>
+
+<div class="review-list">
+  {% for item in imp.items %}
+    {% set src = item.answer_source.value %}
+    <article class="review-item review-{{ src }}" x-data="{ editing: false }">
+      <header class="review-item-header">
+        <div class="q-index-line">
+          <span class="qlabel">Question {{ item.order_index + 1 }}</span>
+          {% if item.suggested_topic %}
+            <span class="dot">·</span>
+            <span class="qtopic">{{ item.suggested_topic }}</span>
+          {% endif %}
+        </div>
+
+        {% if item.status.value == 'approved' %}
+          <span class="badge badge-approved">Approved</span>
+        {% elif item.status.value == 'rejected' %}
+          <span class="badge badge-rejected">Rejected</span>
+        {% elif src == 'extracted' %}
+          <span class="badge badge-extracted">Answer from doc</span>
+        {% elif src == 'ai_generated' %}
+          <span class="badge badge-ai">AI-suggested · needs review</span>
+        {% else %}
+          <span class="badge badge-missing">No answer found</span>
+        {% endif %}
+      </header>
+
+      <div class="review-stem" x-show="!editing">{{ item.parsed_stem }}</div>
+
+      {% if item.parsed_choices %}
+        <div class="review-choices" x-show="!editing">
+          {% for c in item.parsed_choices %}
+            <div class="rc">
+              <strong>{{ c.label }}.</strong> {{ c.text }}
+              {% if item.parsed_answer == c.label %}
+                {% if src == 'extracted' %}
+                  <span class="checkmark">✓</span>
+                {% elif src == 'ai_generated' %}
+                  <span class="sparkle" title="AI-suggested">✨</span>
+                {% endif %}
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="review-choices" x-show="!editing">
+          {% if src == 'missing' %}
+            <form method="post" action="{{ url_for('teacher_ingest.edit_item', item_id=item.id) }}" class="inline-answer-form">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+              <input type="hidden" name="stem" value="{{ item.parsed_stem }}" />
+              <select name="acceptable_answers_dropdown" class="input" onchange="this.previousElementSibling.value=this.value">
+                <option value="">Select the correct choice…</option>
+              </select>
+              <input type="hidden" name="acceptable_answers" value="" />
+            </form>
+          {% else %}
+            <p class="muted small">Grid-in accepted: <code>{{ item.parsed_answer or '(none)' }}</code></p>
+          {% endif %}
+        </div>
+      {% endif %}
+
+      {# Inline edit mode #}
+      <form x-show="editing" method="post" action="{{ url_for('teacher_ingest.edit_item', item_id=item.id) }}" class="edit-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <div class="field"><label>Stem</label>
+          <textarea name="stem" class="input" rows="3">{{ item.parsed_stem }}</textarea>
+        </div>
+        {% if item.parsed_choices %}
+          <div class="grid-2">
+            {% for lbl in ['A','B','C','D'] %}
+              {% set existing = (item.parsed_choices | selectattr('label', 'equalto', lbl) | first) %}
+              <div class="field">
+                <label>{{ lbl }}</label>
+                <input class="input" name="choice_{{ lbl }}" value="{{ existing.text if existing else '' }}" />
+              </div>
+            {% endfor %}
+          </div>
+          <div class="field"><label>Correct choice</label>
+            <select name="correct" class="input">
+              <option value="">—</option>
+              {% for lbl in ['A','B','C','D'] %}
+                <option value="{{ lbl }}" {% if item.parsed_answer == lbl %}selected{% endif %}>{{ lbl }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        {% else %}
+          <div class="field"><label>Accepted answers (comma-separated)</label>
+            <input class="input" name="acceptable_answers" value="{% if item.parsed_answer %}{{ item.parsed_answer }}{% endif %}" />
+          </div>
+        {% endif %}
+        <div class="grid-2">
+          <div class="field"><label>Topic</label><input class="input" name="topic" value="{{ item.suggested_topic or '' }}" /></div>
+          <div class="field"><label>Difficulty</label>
+            <select name="difficulty" class="input">
+              {% for d in ['easy', 'medium', 'hard'] %}
+                <option value="{{ d }}" {% if item.suggested_difficulty == d %}selected{% endif %}>{{ d }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="button-row">
+          <button class="btn btn-primary" type="submit">Save changes</button>
+          <button class="btn btn-ghost" type="button" @click="editing = false">Cancel</button>
+        </div>
+      </form>
+
+      {# Actions row — shown for pending/AI/missing items #}
+      {% if item.status.value not in ('approved', 'rejected') %}
+        <div class="review-actions" x-show="!editing">
+          <button class="btn btn-ghost" type="button" @click="editing = true">✎ Edit answer</button>
+          {% if src != 'missing' %}
+            <form method="post" action="{{ url_for('teacher_ingest.approve_item', item_id=item.id) }}" style="display:inline">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+              <input type="hidden" name="bank_id" value="{{ imp.bank_id or '' }}" />
+              <button class="btn" type="submit">✓ Approve</button>
+            </form>
+          {% endif %}
+          <form method="post" action="{{ url_for('teacher_ingest.reject_item', item_id=item.id) }}" style="display:inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <button class="btn btn-ghost" type="submit">Reject</button>
+          </form>
+        </div>
+      {% endif %}
+    </article>
+  {% else %}
+    <p class="muted">No items yet. If parsing failed, the upload page will show a reason.</p>
+  {% endfor %}
+</div>
+
+{# Footer — Approve all and publish (§2.10) #}
+{% if imp.items %}
+  <form method="post" action="{{ url_for('teacher_ingest.approve_all', import_id=imp.id) }}" class="ingest-footer">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+    <div class="right-cluster">
+      <label class="inline">
+        Publish into
+        <select name="bank_id" class="input inline-select" required>
+          {% for b in banks %}
+            <option value="{{ b.id }}" {% if imp.bank_id == b.id %}selected{% endif %}>{{ b.name }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <a href="{{ url_for('teacher_ingest.index') }}" class="btn btn-ghost">Save draft</a>
+      <button type="submit" class="btn btn-primary btn-lg">Approve all and publish</button>
+    </div>
+  </form>
+{% endif %}
+{% endblock %}

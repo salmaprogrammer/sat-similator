@@ -1,0 +1,16 @@
+[phases.setup]
+nixPkgs = ["python311", "gcc", "postgresql"]
+
+[phases.install]
+cmds = ["pip install -r requirements.txt"]
+
+[phases.build]
+cmds = ["echo build complete"]
+
+[start]
+cmd = "flask db upgrade && flask seed && gunicorn -c gunicorn.conf.py flask_app:app"
+
+[variables]
+FLASK_APP = "flask_app.py"
+FLASK_ENV = "production"
+PYTHONUNBUFFERED = "1"

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="csrf-token" content="{{ csrf_token() }}" />
+  <title>{% block title %}SAT Simulator{% endblock %}</title>
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}" />
+
+  <!-- KaTeX for math rendering -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+          onload="renderMathInElement(document.body)"></script>
+
+  <!-- Alpine + HTMX -->
+  <script defer src="https://unpkg.com/htmx.org@1.9.12"></script>
+  <script defer src="https://unpkg.com/alpinejs@3.14.1/dist/cdn.min.js"></script>
+
+  <!-- HTMX CSRF -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const token = document.querySelector('meta[name="csrf-token"]')?.content;
+      if (window.htmx && token) {
+        document.body.addEventListener("htmx:configRequest", (e) => {
+          e.detail.headers["X-CSRFToken"] = token;
+        });
+      }
+    });
+  </script>
+
+  {% block head_extra %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+  <header class="site-header">
+    <div class="container">
+      <a href="{{ url_for('main.index') }}" class="logo">SatSimilator</a>
+      <nav>
+        {% if current_user.is_authenticated %}
+          {% if current_user.is_student %}
+            <a href="{{ url_for('student.dashboard') }}">Dashboard</a>
+          {% elif current_user.is_teacher %}
+            <a href="{{ url_for('teacher.home') }}">Teacher</a>
+          {% endif %}
+          <span class="muted">{{ current_user.email }}</span>
+          <a href="{{ url_for('auth.logout') }}">Log out</a>
+        {% else %}
+          <a href="{{ url_for('auth.login') }}">Log in</a>
+          <a href="{{ url_for('auth.signup') }}" class="btn btn-primary">Sign up</a>
+        {% endif %}
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul class="flashes">
+          {% for category, message in messages %}
+            <li class="flash flash-{{ category }}">{{ message }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <small class="muted">SatSimilator is an independent SAT practice product. Not affiliated with or endorsed by the College Board.</small>
+    </div>
+  </footer>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,16 @@
+{% extends "onboarding/_wizard.html" %}
+{% block wizard %}
+  <h1>You can absolutely hit that goal.</h1>
+  <p class="muted">Students at your starting range have historically improved by an average of <strong>150 points</strong> using this program.</p>
+  <div class="proof-chart">
+    <div class="bar" style="--h: 20%"><span>Week 1</span></div>
+    <div class="bar" style="--h: 45%"><span>Week 3</span></div>
+    <div class="bar" style="--h: 65%"><span>Week 6</span></div>
+    <div class="bar" style="--h: 90%"><span>Test day</span></div>
+  </div>
+  <p class="muted small">Illustrative — your mileage will vary. Real results are shown on your dashboard once you take a full-length test.</p>
+  <form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+    <button type="submit" class="btn btn-primary btn-lg">Sounds good</button>
+  </form>
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends "onboarding/_wizard.html" %}
+{% block wizard %}
+  <h1>Choose a plan</h1>
+  <p class="muted">You can start on the free tier and upgrade whenever.</p>
+  <div class="plans">
+    <article class="plan">
+      <h3>Free</h3>
+      <p class="price">$0</p>
+      <ul>
+        <li>Unlimited timed practice tests</li>
+        <li>Basic score report</li>
+        <li>2 topics of skill breakdown</li>
+      </ul>
+      <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <button type="submit" class="btn btn-ghost btn-lg">Continue with Free</button>
+      </form>
+    </article>
+    <article class="plan plan-pro">
+      <h3>Pro</h3>
+      <p class="price">$29 / test date</p>
+      <ul>
+        <li>Everything in Free</li>
+        <li>You-vs-average bell curve</li>
+        <li>Full per-topic skill breakdown</li>
+        <li>Time-share by difficulty</li>
+        <li>Per-question review grid</li>
+      </ul>
+      <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <button type="submit" class="btn btn-primary btn-lg">Upgrade to Pro</button>
+      </form>
+    </article>
+  </div>
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends "onboarding/_wizard.html" %}
+{% block wizard %}
+  <h1>Which exam are you preparing for?</h1>
+  <form method="post">
+    {{ form.hidden_tag() }}
+    <div class="radio-cards">
+      {% for value, label in form.exam_type.choices %}
+        <label class="radio-card">
+          <input type="radio" name="exam_type" value="{{ value }}" {% if form.exam_type.data == value %}checked{% endif %} />
+          <span>{{ label }}</span>
+        </label>
+      {% endfor %}
+    </div>
+    {{ form.submit(class="btn btn-primary btn-lg") }}
+  </form>
+{% endblock %}

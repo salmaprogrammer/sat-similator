@@ -1,0 +1,13 @@
+{% extends "onboarding/_wizard.html" %}
+{% block wizard %}
+  <h1>What's your most recent score?</h1>
+  <p class="muted">Diagnostic, official SAT, PSAT — whatever you've got. Leave blank if you haven't taken one.</p>
+  <form method="post">
+    {{ form.hidden_tag() }}
+    <div class="field">
+      {{ form.current_score(class="input", placeholder="e.g. 1180", inputmode="numeric") }}
+      {% for err in form.current_score.errors %}<small class="err">{{ err }}</small>{% endfor %}
+    </div>
+    {{ form.submit(class="btn btn-primary btn-lg") }}
+  </form>
+{% endblock %}

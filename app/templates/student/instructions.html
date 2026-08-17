@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Before you begin — SatSimilator{% endblock %}
+{% block content %}
+<section class="instructions">
+  <h1>Before you begin</h1>
+  <p class="muted">{{ exam.name }}</p>
+
+  <ol class="rules">
+    <li>
+      <strong>Timing.</strong>
+      Each module is separately timed. You cannot go back to a previous module once you submit it.
+    </li>
+    <li>
+      <strong>Scores.</strong>
+      Your predicted score is available immediately after the test. Practice-mode scoring is illustrative — treat it as a signal, not a promise.
+    </li>
+    <li>
+      <strong>Assistive technology.</strong>
+      Screen readers, magnifiers, and Braille displays work throughout the test. Contact support if anything blocks you.
+    </li>
+    <li>
+      <strong>Lockdown.</strong>
+      On test day the app runs in lockdown mode. In practice mode it doesn't — but stay in one tab if you want your times to reflect real conditions.
+    </li>
+  </ol>
+
+  <form method="post" action="{{ url_for('test_engine.start', exam_id=exam.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+    <div class="button-row">
+      <a href="{{ url_for('student.tests') }}" class="btn btn-ghost">Cancel</a>
+      <button type="submit" class="btn btn-primary btn-lg">I'm ready — start test</button>
+    </div>
+  </form>
+</section>
+{% endblock %}
