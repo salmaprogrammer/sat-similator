@@ -213,7 +213,10 @@ function testEngine(cfg) {
     },
     toggleTheme() {
       const el = document.documentElement;
-      el.dataset.theme = el.dataset.theme === "dark" ? "light" : "dark";
+      const next = el.getAttribute("data-theme") === "dark" ? "light" : "dark";
+      if (next === "dark") el.setAttribute("data-theme", "dark");
+      else el.removeAttribute("data-theme");
+      try { localStorage.setItem("theme", next); } catch (e) {}
       this.showMore = false;
     },
     toggleHighlight() { /* Phase-4.5 enhancement */ },
