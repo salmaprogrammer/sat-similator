@@ -8,12 +8,13 @@ import os
 _port = os.getenv("PORT", "5000")
 bind = os.getenv("GUNICORN_BIND", f"0.0.0.0:{_port}")
 
-# NEVER use multiprocessing.cpu_count() as a default — on Railway/Fly containers
-# it returns the HOST cpu count (32+), which spawns ~65 workers and OOMs a
-# 512MB container. Default to 2 workers; override via GUNICORN_WORKERS.
-workers = int(os.getenv("GUNICORN_WORKERS", "2"))
+# Container memory on Railway free/hobby is tight (512MB). One worker fits
+# comfortably; bump via GUNICORN_WORKERS after upgrading the plan.
+workers = int(os.getenv("GUNICORN_WORKERS", "1"))
 worker_class = "sync"
-timeout = 60
+# Concurrency without per-worker RAM cost:
+threads = int(os.getenv("GUNICORN_THREADS", "4"))
+timeout = 120
 graceful_timeout = 30
 keepalive = 5
 
@@ -21,5 +22,7 @@ accesslog = "-"
 errorlog = "-"
 loglevel = os.getenv("GUNICORN_LOG_LEVEL", "info")
 
-# So SQLAlchemy engine + Flask app aren't created before forking:
-preload_app = False
+# Preload the app before forking so workers share read-only memory pages
+# (copy-on-write). Safe here because Flask-SQLAlchemy creates its engine
+# lazily on first request per worker.
+preload_app = True
