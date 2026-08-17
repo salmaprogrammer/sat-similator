@@ -49,6 +49,7 @@ def _register_blueprints(app: Flask) -> None:
     from app.blueprints.integrations.routes import bp as integrations_bp
     from app.blueprints.billing.routes import bp as billing_bp
     from app.blueprints.teacher.classes_routes import bp as teacher_classes_bp
+    from app.blueprints.admin.routes import bp as admin_bp
 
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp)
@@ -62,6 +63,7 @@ def _register_blueprints(app: Flask) -> None:
     app.register_blueprint(integrations_bp)
     app.register_blueprint(billing_bp)
     app.register_blueprint(teacher_classes_bp)
+    app.register_blueprint(admin_bp)
 
 
 def _register_cli(app: Flask) -> None:
