@@ -171,6 +171,74 @@
   </div>
 </section>
 
+{% if review_groups %}
+<section class="review-answers">
+  <h2>Review your answers</h2>
+  <p class="muted">See every question, what you picked, and the correct answer.</p>
+
+  {% for group in review_groups %}
+    <h3 class="review-module-head">
+      {{ group.section | upper }} · Module {{ group.module_num }}
+    </h3>
+    <div class="answer-list">
+      {% for item in group.questions %}
+        <article class="answer-card
+          {% if item.unattempted %}is-unattempted
+          {% elif item.is_correct %}is-correct
+          {% else %}is-wrong{% endif %}">
+          <header class="answer-head">
+            <span class="answer-idx">Q{{ item.idx }}</span>
+            {% if item.topic %}<span class="pill pill-muted">{{ item.topic }}</span>{% endif %}
+            <span class="pill pill-muted">{{ item.difficulty }}</span>
+            {% if item.unattempted %}
+              <span class="answer-status status-skipped">Skipped</span>
+            {% elif item.is_correct %}
+              <span class="answer-status status-correct">Correct</span>
+            {% else %}
+              <span class="answer-status status-wrong">Wrong</span>
+            {% endif %}
+          </header>
+
+          <div class="answer-stem">{{ item.stem }}</div>
+
+          {% if item.type == 'mcq' %}
+            <ul class="answer-choices">
+              {% for c in item.choices %}
+                <li class="answer-line
+                  {% if c.is_correct %}answer-correct{% endif %}
+                  {% if c.is_wrong_pick %}answer-wrong{% endif %}
+                  {% if c.chosen %}was-chosen{% endif %}">
+                  <span class="answer-label">{{ c.label }}</span>
+                  <span class="answer-text">{{ c.text }}</span>
+                  <span class="answer-mark">
+                    {% if c.is_correct and c.chosen %}✓ your answer
+                    {% elif c.is_correct %}✓ correct
+                    {% elif c.chosen %}✗ you picked{% endif %}
+                  </span>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <div class="answer-gridin">
+              <div class="answer-line {% if item.is_correct %}answer-correct{% elif not item.unattempted %}answer-wrong{% endif %}">
+                <span class="answer-label">You</span>
+                <span class="answer-text">{{ item.student_free_response or '(no answer)' }}</span>
+              </div>
+              {% if item.acceptable_answers %}
+                <div class="answer-line answer-correct">
+                  <span class="answer-label">Accepted</span>
+                  <span class="answer-text">{{ item.acceptable_answers | join(', ') }}</span>
+                </div>
+              {% endif %}
+            </div>
+          {% endif %}
+        </article>
+      {% endfor %}
+    </div>
+  {% endfor %}
+</section>
+{% endif %}
+
 {% if not is_pro %}
 <div class="upgrade-banner">
   <div>

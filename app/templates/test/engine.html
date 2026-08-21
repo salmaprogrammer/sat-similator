@@ -75,18 +75,45 @@
   </div>
 </header>
 
+{# Passage image is shown in the LEFT pane for R&W (like a scanned passage),
+   and above the stem in the RIGHT pane for Math (a graph next to the question). #}
+{% set _image_name = question.image_url.rsplit('/', 1)[-1] if question.image_url and question.image_url.startswith('file://') else None %}
+{% set _image_src = url_for('main.serve_upload', filename=_image_name) if _image_name else (question.image_url or '') %}
+{% set _left_image = _image_src if (question.image_url and module.section.value == 'rw') else '' %}
+{% set _right_image = _image_src if (question.image_url and module.section.value == 'math') else '' %}
+
 <main class="test-main">
-  <div class="passage-pane">
+  <div class="passage-pane" :style="{ '--zoom': leftZoom }">
+    <div class="pane-zoom">
+      <button class="zoom-btn" @click="zoomOut('left')" title="Zoom out (passage)">A−</button>
+      <span class="zoom-level" x-text="Math.round(leftZoom * 100) + '%'"></span>
+      <button class="zoom-btn" @click="zoomIn('left')" title="Zoom in (passage)">A+</button>
+      <button class="zoom-btn" @click="resetZoom('left')" title="Reset zoom">↺</button>
+    </div>
     <div class="pane-inner">
-      {% if module.section.value == 'rw' %}
-        <p class="muted small">Passage / stimulus goes here (RW section).</p>
-      {% else %}
-        <p class="muted small">Reference material / figures go here (Math section).</p>
+      {% if question.passage_text %}
+        <div class="passage-text">{{ question.passage_text | e | replace('\n', '<br>') | safe }}</div>
+      {% endif %}
+      {% if _left_image %}
+        <img class="passage-image" src="{{ _left_image }}" alt="Passage figure" />
+      {% endif %}
+      {% if not question.passage_text and not _left_image %}
+        {% if module.section.value == 'rw' %}
+          <p class="muted small">No passage attached to this question.</p>
+        {% else %}
+          <p class="muted small">Reference material / figures appear here when attached to the question.</p>
+        {% endif %}
       {% endif %}
     </div>
   </div>
 
-  <div class="question-pane">
+  <div class="question-pane" :style="{ '--zoom': rightZoom }">
+    <div class="pane-zoom">
+      <button class="zoom-btn" @click="zoomOut('right')" title="Zoom out (question)">A−</button>
+      <span class="zoom-level" x-text="Math.round(rightZoom * 100) + '%'"></span>
+      <button class="zoom-btn" @click="zoomIn('right')" title="Zoom in (question)">A+</button>
+      <button class="zoom-btn" @click="resetZoom('right')" title="Reset zoom">↺</button>
+    </div>
     <div class="pane-inner">
       <div class="question-header">
         <div class="q-index">
@@ -103,6 +130,9 @@
         </button>
       </div>
 
+      {% if _right_image %}
+        <img class="question-image" src="{{ _right_image }}" alt="Question figure" />
+      {% endif %}
       <div class="question-stem">{{ question.stem }}</div>
 
       {% if question.type.value == 'mcq' %}

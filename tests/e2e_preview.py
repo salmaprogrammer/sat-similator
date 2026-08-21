@@ -121,6 +121,7 @@ def main() -> None:
         capture(sctx, f"{BASE}/student/dashboard", "dashboard", "Student dashboard", "Recent activity + integrations + upgrade card")
         capture(sctx, f"{BASE}/student/tests", "tests_lib", "Test library", "Published tests")
         capture(sctx, f"{BASE}/student/tests/1/accommodations", "accommodations", "Accommodations", "Standard / 1.5x / 2x radio cards")
+        capture(sctx, f"{BASE}/attempt/1/results", "results_review", "Results — with Review Your Answers", "New per-question review section at the bottom (edit #5)")
         sctx.close()
 
         browser.close()

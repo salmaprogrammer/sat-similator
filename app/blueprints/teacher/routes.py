@@ -161,11 +161,22 @@ def _load_choices_into_form(form: QuestionForm, q: Question) -> None:
 
 
 def _persist_question(form: QuestionForm, *, bank_id: int, question: Question | None) -> Question:
+    from app.services import storage
+
     q = question or Question(bank_id=bank_id, created_by=current_user.id)
     q.stem = form.stem.data
     q.type = QuestionType(form.type.data)
     q.topic = form.topic.data or None
     q.difficulty = Difficulty(form.difficulty.data)
+    q.passage_text = (form.passage_text.data or "").strip() or None
+
+    # Image handling: remove-current takes precedence; else if a new file was
+    # uploaded, save it and replace the URL.
+    if form.remove_image.data:
+        q.image_url = None
+    uploaded = form.image_file.data
+    if uploaded and getattr(uploaded, "filename", ""):
+        q.image_url = storage.save_upload(uploaded.stream, uploaded.filename, prefix="questions/")
 
     if q.id is None:
         db.session.add(q)

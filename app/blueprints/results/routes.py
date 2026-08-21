@@ -5,7 +5,7 @@ from flask_login import login_required, current_user
 
 from app.extensions import db
 from app.models.attempt import Attempt, AttemptScore
-from app.services.scoring import compute_and_store, question_grid, topics_costing_most
+from app.services.scoring import compute_and_store, question_grid, topics_costing_most, answer_review
 from app.services.paygate import is_pro, gated_slice
 
 bp = Blueprint("results", __name__, url_prefix="/attempt")
@@ -64,6 +64,20 @@ def _build_context(attempt, score, *, printable: bool):
     )
     bars_visible, bars_hidden = gated_slice(per_topic_bars, rows_visible=2)
 
+    review = answer_review(attempt)
+    # Group by module for the template. Use "questions" as the list key (not
+    # "items", which Jinja resolves as dict.items()).
+    review_groups: list[dict] = []
+    current_key = None
+    for r in review:
+        key = (r["section"], r["module_num"])
+        if key != current_key:
+            review_groups.append({
+                "section": r["section"], "module_num": r["module_num"], "questions": []
+            })
+            current_key = key
+        review_groups[-1]["questions"].append(r)
+
     return {
         "attempt": attempt,
         "score": score,
@@ -75,5 +89,6 @@ def _build_context(attempt, score, *, printable: bool):
         "bars_hidden": bars_hidden,
         "is_pro": is_pro(),
         "per_difficulty_time": score.per_difficulty_time or {},
+        "review_groups": review_groups,
         "printable": printable,
     }

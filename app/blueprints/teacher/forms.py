@@ -1,4 +1,5 @@
 from flask_wtf import FlaskForm
+from flask_wtf.file import FileField, FileAllowed
 from wtforms import (
     StringField, TextAreaField, SelectField, IntegerField, BooleanField, SubmitField,
     FieldList, FormField, HiddenField,
@@ -49,6 +50,20 @@ class QuestionForm(FlaskForm):
         "Accepted answers (comma-separated, numerically equivalent)",
         validators=[Optional()],
     )
+    # Optional passage / stimulus rendered in the left pane during the test (RW mainly)
+    passage_text = TextAreaField(
+        "Passage / stimulus (for R&W questions)",
+        validators=[Optional()],
+    )
+    # Optional graph/diagram/passage image
+    image_file = FileField(
+        "Attach image (graph, diagram, or scanned passage)",
+        validators=[
+            Optional(),
+            FileAllowed(["png", "jpg", "jpeg", "gif", "webp"], "Images only"),
+        ],
+    )
+    remove_image = BooleanField("Remove current image")
     submit = SubmitField("Save question")
 
 

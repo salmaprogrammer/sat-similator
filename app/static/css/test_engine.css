@@ -78,9 +78,66 @@
 .passage-pane, .question-pane {
   overflow-y: auto;
   padding: 32px 40px;
+  position: relative;
+  /* font-size scales the whole pane. --zoom is set inline via Alpine. */
+  font-size: calc(1rem * var(--zoom, 1));
 }
 .passage-pane { border-right: 1px solid var(--border); }
 .pane-inner { max-width: 720px; margin: 0 auto; }
+
+.passage-text {
+  white-space: pre-wrap;
+  line-height: 1.65;
+  font-size: 1em;
+}
+.passage-image {
+  max-width: 100%;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  margin: 12px 0;
+}
+.question-image {
+  max-width: 100%;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  margin: 8px 0 14px;
+}
+
+/* Zoom controls floated in the top-right corner of each pane */
+.pane-zoom {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  float: right;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 6px;
+  margin: -8px -8px 0 12px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  font-size: 12px;
+  box-shadow: var(--shadow-sm);
+}
+.pane-zoom .zoom-btn {
+  min-width: 28px; height: 24px;
+  padding: 0 6px;
+  border: none;
+  background: transparent;
+  color: var(--fg-secondary);
+  cursor: pointer;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.pane-zoom .zoom-btn:hover { background: var(--bg-muted); color: var(--fg); }
+.pane-zoom .zoom-level {
+  min-width: 38px; text-align: center;
+  color: var(--fg-muted);
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+}
 
 .question-header {
   display: flex;

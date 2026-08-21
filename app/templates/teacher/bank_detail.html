@@ -22,7 +22,13 @@
           <span class="pill">{{ q.type.value }}</span>
           {% if q.topic %}<span class="pill pill-muted">{{ q.topic }}</span>{% endif %}
           <span class="pill pill-muted">{{ q.difficulty.value }}</span>
+          {% if q.image_url %}<span class="pill pill-muted">🖼 image</span>{% endif %}
+          {% if q.passage_text %}<span class="pill pill-muted">📄 passage</span>{% endif %}
         </div>
+        {% if q.image_url and q.image_url.startswith('file://') %}
+          <img src="{{ url_for('main.serve_upload', filename=q.image_url.rsplit('/', 1)[-1]) }}"
+               alt="" style="max-height: 140px; margin: 6px 0 10px; border-radius: 8px; border: 1px solid var(--border-subtle);" />
+        {% endif %}
         <div class="qstem">{{ q.stem }}</div>
         {% if q.type.value == 'mcq' %}
           <ol class="choices">

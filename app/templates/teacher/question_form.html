@@ -5,7 +5,7 @@
 
 <h1>{{ 'Edit question' if question else 'New question in ' + bank.name }}</h1>
 
-<form method="post" x-data="{ type: '{{ form.type.data }}' }" class="form-narrow">
+<form method="post" enctype="multipart/form-data" x-data="{ type: '{{ form.type.data }}' }" class="form-narrow">
   {{ form.hidden_tag() }}
 
   <div class="field">
@@ -18,6 +18,12 @@
     {{ form.stem(class="input", rows=4) }}
   </div>
 
+  <div class="field">
+    {{ form.passage_text.label }}
+    {{ form.passage_text(class="input", rows=5, placeholder="Optional. Any passage / stimulus that should appear on the LEFT pane during the test.") }}
+    <small class="muted">Leave blank for questions without a passage.</small>
+  </div>
+
   <div class="grid-2">
     <div class="field">
       {{ form.topic.label }}
@@ -28,6 +34,24 @@
       {{ form.difficulty(class="input") }}
     </div>
   </div>
+
+  <fieldset>
+    <legend>Image (optional)</legend>
+    {% if question and question.image_url %}
+      <div class="current-image">
+        <img src="{{ url_for('main.serve_upload', filename=question.image_url.rsplit('/', 1)[-1]) }}"
+             alt="current image" style="max-width: 100%; max-height: 260px; border-radius: 10px; border: 1px solid var(--border);" />
+        <label class="checkbox">
+          {{ form.remove_image() }} Remove current image
+        </label>
+      </div>
+    {% endif %}
+    <div class="field">
+      {{ form.image_file.label }}
+      {{ form.image_file(class="input") }}
+      <small class="muted">PNG / JPG / GIF / WEBP. Renders as the passage in R&W questions, or above the stem in Math.</small>
+    </div>
+  </fieldset>
 
   <fieldset x-show="type === 'mcq'">
     <legend>Choices</legend>

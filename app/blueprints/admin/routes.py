@@ -89,3 +89,26 @@ def db_status():
         return jsonify({"ok": True, "users": n_users, "db_url_scheme": db.engine.url.drivername})
     except Exception as e:  # noqa: BLE001
         return jsonify({"ok": False, "error": f"{type(e).__name__}: {e}"}), 500
+
+
+@bp.route("/ingest-probe", methods=["GET"])
+def ingest_probe():
+    """Tell me if the LLM extraction path is active or if we fall back to
+    the regex heuristic. If this returns llm='heuristic', set
+    ANTHROPIC_API_KEY in Railway variables and redeploy."""
+    if not _token_ok():
+        return jsonify({"ok": False, "error": "token required"}), 401
+    key_set = bool(current_app.config.get("ANTHROPIC_API_KEY"))
+    return jsonify({
+        "ok": True,
+        "llm": "anthropic" if key_set else "heuristic",
+        "anthropic_key_set": key_set,
+        "prompt_version": current_app.config.get("INGEST_PROMPT_VERSION", "v1"),
+        "hint": (
+            "LLM path is active. Uploads will run through Claude."
+            if key_set else
+            "No ANTHROPIC_API_KEY — uploads fall back to a regex parser that "
+            "handles only well-structured markdown/text. Set the env var on "
+            "Railway to enable real question extraction from PDFs/Word."
+        ),
+    })

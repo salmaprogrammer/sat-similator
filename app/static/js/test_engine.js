@@ -42,11 +42,16 @@ function testEngine(cfg) {
     showNavigator: false,
     timerHidden: false,
 
+    // Per-pane zoom (font-size scaling). Persisted to localStorage per user.
+    leftZoom: 1,
+    rightZoom: 1,
+
     // timer bookkeeping
     startTs: Date.now(),
     reportReason: "",
 
     init() {
+      this._loadZoom();
       this._tick();
       this._syncTimer(); // immediate correction
       this._syncInterval = setInterval(() => this._syncTimer(), 15000);
@@ -192,6 +197,43 @@ function testEngine(cfg) {
         enabled: this.strikeEnabled ? "1" : "",
         struck: this.struck.join(","),
       }).catch(() => {});
+    },
+
+    // -- per-pane zoom -----------------------------------------------------
+
+    _loadZoom() {
+      try {
+        const raw = localStorage.getItem("testEngineZoom");
+        if (raw) {
+          const z = JSON.parse(raw);
+          if (typeof z.left === "number") this.leftZoom = z.left;
+          if (typeof z.right === "number") this.rightZoom = z.right;
+        }
+      } catch (e) {}
+    },
+    _saveZoom() {
+      try {
+        localStorage.setItem("testEngineZoom",
+          JSON.stringify({ left: this.leftZoom, right: this.rightZoom }));
+      } catch (e) {}
+    },
+    _clampZoom(v) {
+      return Math.max(0.75, Math.min(1.75, Math.round(v * 100) / 100));
+    },
+    zoomIn(side) {
+      const key = side === "left" ? "leftZoom" : "rightZoom";
+      this[key] = this._clampZoom(this[key] + 0.1);
+      this._saveZoom();
+    },
+    zoomOut(side) {
+      const key = side === "left" ? "leftZoom" : "rightZoom";
+      this[key] = this._clampZoom(this[key] - 0.1);
+      this._saveZoom();
+    },
+    resetZoom(side) {
+      if (side === "left") this.leftZoom = 1;
+      else this.rightZoom = 1;
+      this._saveZoom();
     },
 
     // -- navigation --------------------------------------------------------

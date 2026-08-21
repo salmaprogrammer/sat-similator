@@ -6,7 +6,13 @@ from wtforms import (
 from wtforms.validators import DataRequired, NumberRange, Optional
 
 
-EXAM_TYPES = [("sat", "Digital SAT"), ("psat", "PSAT/NMSQT")]
+EXAM_TYPES = [
+    ("sat",   "Digital SAT"),
+    ("est",   "EST (Sources)"),
+    ("act",   "ACT"),
+    ("ielts", "IELTS"),
+    ("psat",  "PSAT/NMSQT"),
+]
 
 DAYS = [("mon", "Mon"), ("tue", "Tue"), ("wed", "Wed"),
         ("thu", "Thu"), ("fri", "Fri"), ("sat", "Sat"), ("sun", "Sun")]

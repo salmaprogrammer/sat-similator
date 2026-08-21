@@ -34,6 +34,10 @@ class Question(db.Model):
     source: Mapped[QuestionSource] = mapped_column(_enum(QuestionSource), default=QuestionSource.AUTHORED, nullable=False)
     # For free-response: JSON-encoded list of acceptable answer strings (numerically compared)
     acceptable_answers: Mapped[Optional[str]] = mapped_column(Text)
+    # Optional passage/stimulus rendered in the left pane during the test (RW mainly)
+    passage_text: Mapped[Optional[str]] = mapped_column(Text)
+    # Optional image (graph, diagram, or scanned passage). Storage handle: file:// or s3://
+    image_url: Mapped[Optional[str]] = mapped_column(String(1024))
     created_by: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"))
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
 
