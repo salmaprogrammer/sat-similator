@@ -91,6 +91,46 @@ def db_status():
         return jsonify({"ok": False, "error": f"{type(e).__name__}: {e}"}), 500
 
 
+@bp.route("/render-probe/<int:attempt_id>", methods=["GET"])
+def render_probe(attempt_id):
+    """Temporary diagnostic — render the test-engine template server-side and
+    return the traceback as JSON when it fails. Delete after debugging."""
+    if not _token_ok():
+        return jsonify({"ok": False, "error": "token required"}), 401
+    try:
+        from flask import render_template, url_for
+        from app.models.attempt import Attempt
+        from app.models.exam import ExamModule
+        from app.services.timer import module_seconds_remaining
+        attempt = db.session.get(Attempt, attempt_id)
+        if not attempt or not attempt.attempt_modules:
+            return jsonify({"ok": False, "error": "no attempt or no modules"}), 404
+        am = attempt.attempt_modules[0]
+        module = db.session.get(ExamModule, am.module_id)
+        if not module.module_questions:
+            return jsonify({"ok": False, "error": "module has no questions"}), 404
+        mq = module.module_questions[0]
+        question = mq.question
+        ctx = {
+            "attempt": attempt, "attempt_module": am, "module": module,
+            "module_num": 1, "total_modules": len(attempt.attempt_modules),
+            "q_idx": 1, "total_questions": len(module.module_questions),
+            "question": question,
+            "response": next((r for r in attempt.responses if r.question_id == question.id), None) or type("R", (), {"choice_id": None, "free_response_text": None, "strikethrough_state": None, "marked_for_review": False})(),
+            "seconds_remaining": module_seconds_remaining(am),
+            "nav_items": [],
+            "prev_url": None, "next_url": "#",
+        }
+        html = render_template("test/engine.html", **ctx)
+        return jsonify({"ok": True, "html_bytes": len(html), "question_id": question.id, "has_image": bool(question.image_url), "has_passage": bool(question.passage_text)})
+    except Exception as e:  # noqa: BLE001
+        return jsonify({
+            "ok": False,
+            "error": f"{type(e).__name__}: {e}",
+            "trace": traceback.format_exc().splitlines()[-25:],
+        }), 500
+
+
 @bp.route("/ingest-probe", methods=["GET"])
 def ingest_probe():
     """Tell me if the LLM extraction path is active or if we fall back to
