@@ -38,7 +38,7 @@ class Config:
 
     ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
-    GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+    GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.6-flash")
     INGEST_PROMPT_VERSION = os.getenv("INGEST_PROMPT_VERSION", "v1")
 
     STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY", "")
