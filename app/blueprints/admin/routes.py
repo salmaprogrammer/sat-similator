@@ -91,6 +91,61 @@ def db_status():
         return jsonify({"ok": False, "error": f"{type(e).__name__}: {e}"}), 500
 
 
+@bp.route("/gemini-probe", methods=["GET", "POST"])
+def gemini_probe():
+    """Temporary: send a canned prompt to Gemini and return the raw response
+    + parsed length. Delete after debugging."""
+    if not _token_ok():
+        return jsonify({"ok": False, "error": "token required"}), 401
+    key = current_app.config.get("GEMINI_API_KEY")
+    if not key:
+        return jsonify({"ok": False, "error": "no GEMINI_API_KEY"}), 400
+
+    sample = (
+        "1. If 3x + 5 = 20, what is the value of x?\n"
+        "A) 3\nB) 5\nC) 15\nD) 25\n\n"
+        "2. A circle has radius 4. What is its area in terms of pi?\n"
+        "A. 4pi\nB. 8pi\nC. 16pi\nD. 32pi\n"
+    )
+    try:
+        import google.generativeai as genai
+        from app.services.ingest.llm_extract import PROMPT_TEMPLATE
+        genai.configure(api_key=key)
+        model_name = current_app.config.get("GEMINI_MODEL", "gemini-2.0-flash")
+        model = genai.GenerativeModel(
+            model_name,
+            generation_config={
+                "temperature": 0.2,
+                "max_output_tokens": 8192,
+                "response_mime_type": "application/json",
+            },
+        )
+        resp = model.generate_content(PROMPT_TEMPLATE.format(text=sample))
+        raw = (resp.text or "")
+        import json as _json
+        parsed_len = None
+        parse_err = None
+        try:
+            parsed = _json.loads(raw)
+            parsed_len = len(parsed) if isinstance(parsed, list) else -1
+        except Exception as e:  # noqa: BLE001
+            parse_err = str(e)
+        return jsonify({
+            "ok": True,
+            "model": model_name,
+            "raw_response": raw,
+            "raw_len": len(raw),
+            "parsed_len": parsed_len,
+            "parse_error": parse_err,
+        })
+    except Exception as e:  # noqa: BLE001
+        return jsonify({
+            "ok": False,
+            "error": f"{type(e).__name__}: {e}",
+            "trace": traceback.format_exc().splitlines()[-15:],
+        }), 500
+
+
 @bp.route("/ingest-probe", methods=["GET"])
 def ingest_probe():
     """Tell me which LLM extraction path is active.
