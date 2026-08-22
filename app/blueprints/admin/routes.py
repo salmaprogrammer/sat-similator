@@ -91,6 +91,27 @@ def db_status():
         return jsonify({"ok": False, "error": f"{type(e).__name__}: {e}"}), 500
 
 
+@bp.route("/gemini-models", methods=["GET"])
+def gemini_models():
+    """List Gemini models this key can actually use. Delete after debugging."""
+    if not _token_ok():
+        return jsonify({"ok": False, "error": "token required"}), 401
+    key = current_app.config.get("GEMINI_API_KEY")
+    if not key:
+        return jsonify({"ok": False, "error": "no GEMINI_API_KEY"}), 400
+    try:
+        import google.generativeai as genai
+        genai.configure(api_key=key)
+        models = []
+        for m in genai.list_models():
+            if "generateContent" in getattr(m, "supported_generation_methods", []):
+                models.append({"name": m.name, "display": getattr(m, "display_name", "")})
+        return jsonify({"ok": True, "count": len(models), "models": models})
+    except Exception as e:  # noqa: BLE001
+        return jsonify({"ok": False, "error": f"{type(e).__name__}: {e}",
+                        "trace": traceback.format_exc().splitlines()[-15:]}), 500
+
+
 @bp.route("/gemini-probe", methods=["GET", "POST"])
 def gemini_probe():
     """Temporary: send a canned prompt to Gemini and return the raw response
