@@ -93,22 +93,35 @@ def db_status():
 
 @bp.route("/ingest-probe", methods=["GET"])
 def ingest_probe():
-    """Tell me if the LLM extraction path is active or if we fall back to
-    the regex heuristic. If this returns llm='heuristic', set
-    ANTHROPIC_API_KEY in Railway variables and redeploy."""
+    """Tell me which LLM extraction path is active.
+
+    Priority: Gemini > Anthropic > heuristic.
+    """
     if not _token_ok():
         return jsonify({"ok": False, "error": "token required"}), 401
-    key_set = bool(current_app.config.get("ANTHROPIC_API_KEY"))
+    gemini_set = bool(current_app.config.get("GEMINI_API_KEY"))
+    anthropic_set = bool(current_app.config.get("ANTHROPIC_API_KEY"))
+    if gemini_set:
+        provider = "gemini"
+    elif anthropic_set:
+        provider = "anthropic"
+    else:
+        provider = "heuristic"
+
+    hint = {
+        "gemini":    f"Gemini path active — using {current_app.config.get('GEMINI_MODEL', 'gemini-2.0-flash')}.",
+        "anthropic": "Anthropic Claude path active.",
+        "heuristic": ("No LLM key set — uploads fall back to a regex parser that "
+                      "only handles well-structured text. Set GEMINI_API_KEY or "
+                      "ANTHROPIC_API_KEY on Railway to enable real extraction."),
+    }[provider]
+
     return jsonify({
         "ok": True,
-        "llm": "anthropic" if key_set else "heuristic",
-        "anthropic_key_set": key_set,
+        "llm": provider,
+        "gemini_key_set": gemini_set,
+        "anthropic_key_set": anthropic_set,
+        "gemini_model": current_app.config.get("GEMINI_MODEL", "gemini-2.0-flash"),
         "prompt_version": current_app.config.get("INGEST_PROMPT_VERSION", "v1"),
-        "hint": (
-            "LLM path is active. Uploads will run through Claude."
-            if key_set else
-            "No ANTHROPIC_API_KEY — uploads fall back to a regex parser that "
-            "handles only well-structured markdown/text. Set the env var on "
-            "Railway to enable real question extraction from PDFs/Word."
-        ),
+        "hint": hint,
     })

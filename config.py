@@ -37,6 +37,8 @@ class Config:
     CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", _redis)
 
     ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
+    GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+    GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
     INGEST_PROMPT_VERSION = os.getenv("INGEST_PROMPT_VERSION", "v1")
 
     STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY", "")

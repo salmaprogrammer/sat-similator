@@ -13,9 +13,9 @@ Given raw extracted text, returns a list of ExtractedItem dicts:
       "difficulty": str | None,
     }
 
-If ANTHROPIC_API_KEY is configured we call Claude; otherwise we fall back to a
-deterministic heuristic parser suitable for well-structured markdown / text
-input. That keeps dev + tests fast and offline.
+Provider priority: **Gemini** (if GEMINI_API_KEY set) → **Anthropic** (if
+ANTHROPIC_API_KEY set) → **heuristic** regex fallback. That keeps dev + tests
+fast and offline while letting prod use whichever LLM key is available.
 """
 from __future__ import annotations
 import json
@@ -23,6 +23,14 @@ import re
 from typing import List, Dict, Any, Optional
 
 from flask import current_app
+
+
+def _active_provider() -> str:
+    if current_app.config.get("GEMINI_API_KEY"):
+        return "gemini"
+    if current_app.config.get("ANTHROPIC_API_KEY"):
+        return "anthropic"
+    return "heuristic"
 
 
 PROMPT_TEMPLATE = """You are an expert exam-question extractor for the SAT.
@@ -48,10 +56,17 @@ Document:
 
 def extract(text: str) -> List[Dict[str, Any]]:
     """Return a list of extracted item dicts; keeps raw_text alongside each."""
-    api_key = current_app.config.get("ANTHROPIC_API_KEY")
-    if api_key:
+    provider = _active_provider()
+
+    if provider == "gemini":
         try:
-            items = _extract_via_anthropic(text, api_key)
+            items = _extract_via_gemini(text, current_app.config["GEMINI_API_KEY"])
+        except Exception as e:  # noqa: BLE001
+            current_app.logger.warning("Gemini extraction failed, falling back: %s", e)
+            items = _fallback_after_provider(text, "gemini")
+    elif provider == "anthropic":
+        try:
+            items = _extract_via_anthropic(text, current_app.config["ANTHROPIC_API_KEY"])
         except Exception as e:  # noqa: BLE001
             current_app.logger.warning("Anthropic extraction failed, falling back to heuristic: %s", e)
             items = _extract_heuristic(text)
@@ -62,6 +77,47 @@ def extract(text: str) -> List[Dict[str, Any]]:
     for it in items:
         it.setdefault("raw_text", it.get("stem", "")[:500])
     return items
+
+
+def _fallback_after_provider(text: str, failed: str) -> List[Dict[str, Any]]:
+    """When Gemini fails, try Anthropic next (if configured); else heuristic."""
+    if failed == "gemini" and current_app.config.get("ANTHROPIC_API_KEY"):
+        try:
+            return _extract_via_anthropic(text, current_app.config["ANTHROPIC_API_KEY"])
+        except Exception as e:  # noqa: BLE001
+            current_app.logger.warning("Anthropic fallback also failed: %s", e)
+    return _extract_heuristic(text)
+
+
+# ---------------------------------------------------------------------------
+# Gemini path
+# ---------------------------------------------------------------------------
+
+def _extract_via_gemini(text: str, api_key: str) -> List[Dict[str, Any]]:
+    import google.generativeai as genai
+
+    genai.configure(api_key=api_key)
+    model_name = current_app.config.get("GEMINI_MODEL", "gemini-2.0-flash")
+    model = genai.GenerativeModel(
+        model_name,
+        generation_config={
+            "temperature": 0.2,
+            "max_output_tokens": 8192,
+            "response_mime_type": "application/json",
+        },
+    )
+    response = model.generate_content(PROMPT_TEMPLATE.format(text=text[:100_000]))
+    raw = (response.text or "").strip()
+    # response_mime_type=application/json should give clean JSON, but strip
+    # any stray fences just in case.
+    raw = re.sub(r"^```(?:json)?\s*|\s*```$", "", raw, flags=re.M)
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Gemini returned non-JSON: {raw[:200]}") from e
+    if not isinstance(data, list):
+        raise ValueError("Expected a JSON array from Gemini")
+    return data
 
 
 # ---------------------------------------------------------------------------
