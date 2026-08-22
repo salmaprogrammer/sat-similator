@@ -111,7 +111,7 @@ def gemini_probe():
         import google.generativeai as genai
         from app.services.ingest.llm_extract import _render_prompt
         genai.configure(api_key=key)
-        model_name = current_app.config.get("GEMINI_MODEL", "gemini-flash-latest")
+        model_name = current_app.config.get("GEMINI_MODEL", "gemini-2.5-flash")
         model = genai.GenerativeModel(
             model_name,
             generation_config={
@@ -164,7 +164,7 @@ def ingest_probe():
         provider = "heuristic"
 
     hint = {
-        "gemini":    f"Gemini path active — using {current_app.config.get('GEMINI_MODEL', 'gemini-flash-latest')}.",
+        "gemini":    f"Gemini path active — using {current_app.config.get('GEMINI_MODEL', 'gemini-2.5-flash')}.",
         "anthropic": "Anthropic Claude path active.",
         "heuristic": ("No LLM key set — uploads fall back to a regex parser that "
                       "only handles well-structured text. Set GEMINI_API_KEY or "
@@ -176,7 +176,7 @@ def ingest_probe():
         "llm": provider,
         "gemini_key_set": gemini_set,
         "anthropic_key_set": anthropic_set,
-        "gemini_model": current_app.config.get("GEMINI_MODEL", "gemini-flash-latest"),
+        "gemini_model": current_app.config.get("GEMINI_MODEL", "gemini-2.5-flash"),
         "prompt_version": current_app.config.get("INGEST_PROMPT_VERSION", "v1"),
         "hint": hint,
     })
