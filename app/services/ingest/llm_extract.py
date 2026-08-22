@@ -103,7 +103,7 @@ def _extract_via_gemini(text: str, api_key: str) -> List[Dict[str, Any]]:
     import google.generativeai as genai
 
     genai.configure(api_key=api_key)
-    model_name = current_app.config.get("GEMINI_MODEL", "gemini-2.0-flash")
+    model_name = current_app.config.get("GEMINI_MODEL", "gemini-flash-latest")
     model = genai.GenerativeModel(
         model_name,
         generation_config={
