@@ -109,7 +109,7 @@ def gemini_probe():
     )
     try:
         import google.generativeai as genai
-        from app.services.ingest.llm_extract import PROMPT_TEMPLATE
+        from app.services.ingest.llm_extract import _render_prompt
         genai.configure(api_key=key)
         model_name = current_app.config.get("GEMINI_MODEL", "gemini-2.0-flash")
         model = genai.GenerativeModel(
@@ -120,7 +120,7 @@ def gemini_probe():
                 "response_mime_type": "application/json",
             },
         )
-        resp = model.generate_content(PROMPT_TEMPLATE.format(text=sample))
+        resp = model.generate_content(_render_prompt(sample))
         raw = (resp.text or "")
         import json as _json
         parsed_len = None

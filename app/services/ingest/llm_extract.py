@@ -38,8 +38,8 @@ The following document contains one or more practice questions. Extract every qu
 
 For each question, return a JSON object with these keys:
 - "stem": the question stem (string, required)
-- "choices": array of {"label": "A"|"B"|"C"|"D", "text": "..."} for multiple-choice, or null for free-response (grid-in) questions
-- "answer": the correct answer. For MCQ, the letter of the correct choice. For grid-in, a JSON-array-encoded string of acceptable numeric-equivalent answers, e.g. "[\"0.5\", \"1/2\"]"
+- "choices": array of choice objects with keys "label" (one of A, B, C, D) and "text", for multiple-choice; or null for free-response (grid-in) questions
+- "answer": the correct answer. For MCQ, the letter of the correct choice. For grid-in, a JSON-array-encoded string of acceptable numeric-equivalent answers (e.g. the string [\"0.5\", \"1/2\"])
 - "answer_source": one of "extracted" (the document explicitly stated the answer, e.g. an answer key or bolded choice), "ai_generated" (you solved the question yourself), or "missing" (no answer stated and you cannot confidently solve it)
 - "confidence": float 0.0-1.0 when answer_source is "ai_generated"; null otherwise
 - "topic": your best guess of the topic (e.g. "Algebra", "Geometry", "Reading Comprehension"), or null
@@ -49,9 +49,15 @@ Return ONLY the JSON array. No preamble, no explanation, no markdown fences.
 
 Document:
 ---
-{text}
+{TEXT}
 ---
 """
+
+
+def _render_prompt(text: str) -> str:
+    """Prompt has JSON-shaped hints; str.format() would treat their braces as
+    format spec. Simple replace of a single {TEXT} marker avoids that trap."""
+    return PROMPT_TEMPLATE.replace("{TEXT}", text)
 
 
 def extract(text: str) -> List[Dict[str, Any]]:
@@ -106,7 +112,7 @@ def _extract_via_gemini(text: str, api_key: str) -> List[Dict[str, Any]]:
             "response_mime_type": "application/json",
         },
     )
-    response = model.generate_content(PROMPT_TEMPLATE.format(text=text[:100_000]))
+    response = model.generate_content(_render_prompt(text[:100_000]))
     raw = (response.text or "").strip()
     # response_mime_type=application/json should give clean JSON, but strip
     # any stray fences just in case.
@@ -131,7 +137,7 @@ def _extract_via_anthropic(text: str, api_key: str) -> List[Dict[str, Any]]:
     msg = client.messages.create(
         model="claude-sonnet-4-6",
         max_tokens=4096,
-        messages=[{"role": "user", "content": PROMPT_TEMPLATE.format(text=text[:60_000])}],
+        messages=[{"role": "user", "content": _render_prompt(text[:60_000])}],
     )
     content = "".join(getattr(part, "text", "") for part in msg.content)
     content = content.strip()
